@@ -5,6 +5,9 @@ require('dotenv').config({
     path: path.resolve('./config/.env'),
 });
 
+//security
+const helmet = require("helmet");
+
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
@@ -13,8 +16,11 @@ const cookieParser = require("cookie-parser");
 const mongoSanitize = require('express-mongo-sanitize');
 
 const express = require("express");
-const port = process.env.PORT || 8080;
+const port = process.env.EXPRESS_PORT || 8080;
 const app = express();
+
+//for security
+app.use(helmet());
 
 // enable CORS
 app.use(cors({
@@ -35,13 +41,18 @@ app.use(bodyParser.json());
 app.use(mongoSanitize());
 
 //establish database connection
-const dbConnection = require("./config/db_connection");
+const dbConnection = require("./db/db_connection");
 
-//all routes for api
-const authRoutes = require("./routes/auth_routes");
+const publicRouter = require("./router/public/public_router");
+const authRouter = require("./router/auth/auth_router");
+// const privateRouter = require("./router/private/private)router"); //TODO middleware
+
+//public
+app.use(publicRouter);
 
 //routes for csrf and jwt tokens
-app.use(authRoutes);
+app.use(authRouter);
+
 
 app.listen(port, () => {
     console.log(`Listening to ${port}`)

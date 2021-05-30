@@ -1,5 +1,9 @@
 const bcrypt = require('bcrypt');
 
+const {
+    passwordCheckDebugMsges
+} = require("./debug");
+
 //set salt gen
 const saltRounds = 10;
 
@@ -10,28 +14,9 @@ const getHashedPassword = (password) => {
 
 //compares the attempt hashed password with the hashedpassword from db
 const compareHashedPassword = (attemptHashedPassword, hashedPassword) => {
-
-    console.log("testing: ", attemptHashedPassword)
-    console.log("comparing: ", attemptHashedPassword, " : ", hashedPassword)
-
-    console.log("same pass?: ", (attemptHashedPassword === hashedPassword ));
-
+    passwordCheckDebugMsges(attemptHashedPassword, hashedPassword);
     return bcrypt.compareSync(attemptHashedPassword, hashedPassword);
 }
-
-// //compares the unhashed password to hashedpassword
-// const compareUnhashedPassword = async (attemptPassword, hashedPassword) => {
-
-
-
-//     const attemptHashedPassword = await getHashedPasswordAsync(attemptPassword);
-
-//     console.log("testing: ", attemptPassword)
-//     console.log("comparing: ", attemptHashedPassword, " : ", hashedPassword)
-
-//     return bcrypt.compareSync(attemptHashedPassword, hashedPassword);
-// }
-
 
 const getHashedPasswordAsync = async (password) => {
     try {

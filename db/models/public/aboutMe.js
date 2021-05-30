@@ -1,0 +1,33 @@
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+const {
+    genID,
+} = require("../../../config/verification_gen");
+
+const AboutMeSchema = new Schema({
+    _id: {
+        type: String,
+        default: () => genID()
+    },
+    email: {
+        type: String,
+        required: true
+    },
+    description: {
+        type: String,
+    },
+    linkedin_url: {
+        type: String, 
+        required: true
+    },
+    github_url: {
+        type: String, 
+        required: true
+    },
+    resume_url: {
+        type: String,
+        required: true
+    },
+});
+module.exports = mongoose.model('about_me', AboutMeSchema, "about_me_data");

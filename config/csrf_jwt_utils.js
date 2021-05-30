@@ -18,19 +18,19 @@ const COOKIE_OPTIONS = {
 
 
 // generate a token from combining xsrf and jwt and return it
-function generateAccessToken(cleanUserObj) {
+function generateAccessToken(userDbObj) {
     return new Promise(resolve => {
         //clean user object does not have any sensitive user information
-        if (!cleanUserObj) {
+        if (!userDbObj) {
             resolve(null);
         }
 
         //use specifically userid, email, firstname, lastname in generation
-        const userData = {
-            userid: cleanUserObj.userid,
-            firstname: cleanUserObj.firstname,
-            lastname: cleanUserObj.lastname,
-            email: cleanUserObj.email,
+        const cleanUserData = {
+            userid: userDbObj.userid,
+            firstname: userDbObj.firstname,
+            lastname: userDbObj.lastname,
+            email: userDbObj.email,
         };
 
         //generate xsrf token of 32 length to generate the access token
@@ -41,7 +41,7 @@ function generateAccessToken(cleanUserObj) {
 
         // generate access token and expiry date
         const refreshToken = jwt.sign(
-            userData,
+            cleanUserData,
             privateKey, 
             { expiresIn: process.env.ACCESS_TOKEN_LIFE }
         );
@@ -77,48 +77,6 @@ function verifyToken(refreshToken, xsrfToken = "", callBack) {
     jwt.verify(refreshToken, privateKey, callBack);
 }
 
-// handle the API response
-function handleResponse(req, res, statusCode, data, message) {
-    let isError = false;
-    let errorMessage = message;
-
-    switch (statusCode) {
-        case 204:
-            return res.sendStatus(204);
-        case 400:
-            isError = true;
-            break;
-        case 401:
-            isError = true;
-            errorMessage = message || 'Invalid user.';
-            clearTokens(req, res);
-            break;
-        case 403:
-            isError = true;
-            errorMessage = message || 'Access to this resource is denied.';
-            clearTokens(req, res);
-            break;
-        case 409:
-            isError = true;
-            errorMessage = message || 'Conflicting Data';
-            clearTokens(req, res);
-            break;
-        default:
-            break;
-    }
-
-    const resObj = data || {};
-
-    console.log("sending ", resObj);
-
-    if (isError) {
-        resObj.error = true;
-        resObj.message = errorMessage;
-    }
-
-    return res.status(statusCode).json(resObj);
-}
-
 // clear token access, refresh and csrf tokens from cookie
 function clearTokens(req, res) {
     const { signedCookies = {} } = req;
@@ -130,12 +88,60 @@ function clearTokens(req, res) {
     res.clearCookie('refreshToken', COOKIE_OPTIONS);
 }
 
+
+// middleware that checks if JWT token exists and verifies it if it does exist.
+// this is used for routes when the user is logged in. 
+const authMiddleware = function (req, res, next) {
+    console.log("auth middleware");
+    // check header or url parameters or post parameters for token
+    var token = req.headers['authorization'];
+    if (!token) return handleRes(req, res, 401);
+
+    token = token.replace('Bearer ', '');
+
+    // get xsrf token from the header
+    const xsrfToken = req.headers['xsrf-token'];
+    if (!xsrfToken) {
+        return handleRes(req, res, 403);
+    }
+
+    // verify xsrf token
+    const { signedCookies = {} } = req;
+    const { refreshToken } = signedCookies;
+    if (!refreshToken
+        || !(refreshToken in activeRefreshTokenList)
+        || activeRefreshTokenList[refreshToken] !== xsrfToken
+    ) {
+        return handleRes(
+            req, 
+            res, 
+            401, 
+            err
+        );
+    }
+
+    // verify token with secret key and xsrf token
+    verifyToken(token, xsrfToken, (err, payload) => {
+        if (err)
+            return handleRes(
+                req, 
+                res, 
+                401, 
+                err
+            );
+        else {
+            req.user = payload; //set the user to req so other routes can use it
+            next();
+        }
+    });
+}
+
 module.exports = {
     activeRefreshTokenList,
     COOKIE_OPTIONS,
     generateAccessToken,
     generateRefreshToken,
     verifyToken,
-    handleResponse,
-    clearTokens
+    clearTokens,
+    authMiddleware
 }
