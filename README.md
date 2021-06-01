@@ -30,9 +30,16 @@ nanoid https://www.npmjs.com/package/nanoid
 mongoose sanitize for express https://www.npmjs.com/package/express-mongo-sanitize
 
 
+npm https://www.npmjs.com/package/helmet
+for securing express apps with http headers
+
 amazon s3 storage with multer
 
+googleapis npm
+ejs npm email templates
 
+node-fetch for external requests
+https://www.npmjs.com/package/node-fetch
 
 .env file:
 

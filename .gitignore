@@ -4,24 +4,18 @@
 
 config/.env
 
-models/aboutMe.js
-
-models/baseMap.js
-
-models/utility.js
-
-models/models.js
-
 helper/coordinateGrid.js
 
 routes/public_routes.js
 
 routes/auth_routes.js
 
-controllers/s3_img_controller.js
-
-config/s3Config.js
-
-config/s3.env.js
-
 controllers/csgo_controller.js
+
+trash/*
+
+aws/*
+
+/config/passport.js
+
+/db/models/csgo/*

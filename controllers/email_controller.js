@@ -1,75 +1,101 @@
 const nodemailer = require('nodemailer');
+const ejs = require('ejs');
+const { google } = require('googleapis');
+const { OAuth2 } = google.auth;
 
-let testAccount;
-let transporter;
+const SERVER_EMAIL_ENABLE = (process.env.SERVER_EMAIL_ENABLE === "true");
 
-async function initializeNodeMailer() {
-    testAccount = await nodemailer.createTestAccount(); //for testing purposes
+const { email_templates } = require("../email/templates/template_export");
 
+const {
+    sendEmailDebugMsges
+} = require("../config/debug");
 
-    // create reusable transporter object using the default SMTP transport
-    transporter = nodemailer.createTransport({
-        host: "smtp.ethereal.email",
-        port: 587,
-        secure: false, // true for 465, false for other ports
+const {
+    OAUTH_CLIENT_ID,
+    OAUTH_CLIENT_SECRET,
+    OAUTH_REFRESH_TOKEN,
+    SERVER_EMAIL,
+    SERVER_EMAIL_PROVIDER
+} = process.env;
+
+const oauth2Client = new OAuth2(
+    OAUTH_CLIENT_ID,
+    OAUTH_CLIENT_SECRET,
+    "https://developers.google.com/oauthplayground"
+);
+
+//gets the rendered html template from ejs for email
+async function getHTMLTemplate(vars, filePath) {
+    const renderedHtml = await new Promise((resolve, reject) => { 
+        ejs.renderFile(filePath, vars, {}, (err, content) => {
+            if(err) {
+                console.log(err);
+                resolve(null);
+            }
+            else {
+                resolve(content);
+            }
+        });
+    });
+    return renderedHtml;
+}
+
+//send email
+async function sendEmail(data) {
+    oauth2Client.setCredentials({
+        refresh_token: OAUTH_REFRESH_TOKEN,
+    });
+
+    const accessToken = await new Promise((resolve, reject) => {
+        oauth2Client.getAccessToken((err, token) => {
+            if (err) {
+                sendEmailDebugMsges(err);
+                reject("Failed to create access token");
+            }
+            resolve(token);
+        });
+    });
+
+    const filePath = `${__dirname}/../email/templates/${email_templates[data.template].fileName}`;
+
+    //get html template for email
+    const html = await getHTMLTemplate(data.vars, filePath);
+
+    const transporter = nodemailer.createTransport({
+        service: SERVER_EMAIL_PROVIDER,
         auth: {
-            user: testAccount.user, // generated ethereal user
-            pass: testAccount.pass, // generated ethereal password
+            type: "OAuth2",
+            user: SERVER_EMAIL,
+            accessToken,
+            clientId: OAUTH_CLIENT_ID,
+            clientSecret: OAUTH_CLIENT_SECRET,
+            refreshToken: OAUTH_REFRESH_TOKEN
         },
     });
 
-    console.log("initialized NodeMailer");
-}
+    const mailOptions = {
+        from: SERVER_EMAIL,
+        to: data.to,
+        subject: email_templates[data.template].subject,
+        html: html
+    };
 
-
-// const transporter = nodemailer.createTransport({
-//     service: process.env.SRV_EMAIL_PROVIDER,
-//     port: 25,
-//     secure: false, 
-//     logger: true,
-//     debug: true,
-//     secureConnection: false,
-//     auth: {
-//         user: process.env.SERVER_EMAIL,
-//         pass: process.env.SERVER_EMAIL_PASSWORD
-//     },
-//     ignoreTLS: true // add this 
-// });
-
-
-initializeNodeMailer();
-
-
-module.exports = {
-    //To can be a list for multiple ie: "email, email2, email3"
-    //you can also change text to html for easy html formatting.
-    makeEmailObj: function (from, to, subject, text) {
-        return {
-            from: process.env.SERVER_EMAIL,
-            to: to,
-            subject: subject,
-            text: text
-        }
-    },
-
-    sendEmail: async function (to, subject, html) {
-        const emailObj = {
-            from: testAccount.user, //TODO must change to gmail later
-            to: to,
-            subject: subject,
-            html: html
-        }
-        transporter.sendMail(emailObj, function (error, info) {
-            if (error) {
-                console.log(error);
-                return error;
-            } else {
-                console.log(info);
-                console.log('Email sent: ' + info.response);
-                return info.response;
+    if (SERVER_EMAIL_ENABLE) {
+        transporter.sendMail(mailOptions, (err, info) => {
+            if (err) {
+                sendEmailDebugMsges(err, data);
+                return err;
             }
+            sendEmailDebugMsges("sending an email to: ", data.to, data);
+            return info;
         });
     }
+    else {
+        return true;
+    }
+};
 
-
+module.exports = {
+    sendEmail
 };

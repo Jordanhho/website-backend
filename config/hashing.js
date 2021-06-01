@@ -1,37 +1,28 @@
 const bcrypt = require('bcrypt');
 
+const {
+    passwordCheckDebugMsges
+} = require("./debug");
+
 //set salt gen
 const saltRounds = 10;
 
-const getHashedPassword = (password) => {
+async function getHashedPassword(password) {
     const salt = bcrypt.genSaltSync(saltRounds);
     return bcrypt.hashSync(password, salt);
 }
 
 //compares the attempt hashed password with the hashedpassword from db
-const compareHashedPassword = (attemptHashedPassword, hashedPassword) => {
+const compareHashedPassword = async (attemptPassword, hashedPassword) => {
+    //TODO remove this later
+    const attemptHashedPassword = await getHashedPassword(attemptPassword);
+    passwordCheckDebugMsges(attemptPassword, attemptHashedPassword, hashedPassword);
 
-    console.log("testing: ", attemptHashedPassword)
-    console.log("comparing: ", attemptHashedPassword, " : ", hashedPassword)
+    const same = bcrypt.compareSync(attemptPassword, hashedPassword);
 
-    console.log("same pass?: ", (attemptHashedPassword === hashedPassword ));
-
-    return bcrypt.compareSync(attemptHashedPassword, hashedPassword);
+    console.log("same? ", same);
+    return bcrypt.compareSync(attemptPassword, hashedPassword);
 }
-
-// //compares the unhashed password to hashedpassword
-// const compareUnhashedPassword = async (attemptPassword, hashedPassword) => {
-
-
-
-//     const attemptHashedPassword = await getHashedPasswordAsync(attemptPassword);
-
-//     console.log("testing: ", attemptPassword)
-//     console.log("comparing: ", attemptHashedPassword, " : ", hashedPassword)
-
-//     return bcrypt.compareSync(attemptHashedPassword, hashedPassword);
-// }
-
 
 const getHashedPasswordAsync = async (password) => {
     try {
@@ -57,5 +48,5 @@ const compareHashedPasswordAsync = async (attemptHashedPassword, hashedPassword)
 
 module.exports = { 
     getHashedPassword, 
-    compareHashedPassword
+    compareHashedPassword,
 };
