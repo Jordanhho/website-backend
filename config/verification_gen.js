@@ -7,14 +7,14 @@ const ms = require("ms");
 
 const moment = require("moment");
 
-const VERIFICATION_CODE_DIGITS = process.env.VERIFICATION_CODE_DIGITS;
-const ACTIVATION_CODE_DIGITS = process.env.ACTIVATION_CODE_DIGITS;
-const VERIFICATION_TOKEN_CHARS = process.env.VERIFICATION_TOKEN_CHARS;
+const VERIFICATION_CODE_DIGITS = 6;
+const ACTIVATION_CODE_DIGITS = 6;
+const VERIFICATION_TOKEN_CHARS = 43;
 const EMAIL_VERIFICATION_CODE_EXPIRE = process.env.EMAIL_VERIFICATION_CODE_EXPIRE;
 const RESET_PASSWORD_VERIFICATION_CODE_EXPIRE = process.env.RESET_PASSWORD_VERIFICATION_CODE_EXPIRE;
 const RESET_PASSWORD_VERIFICATION_TOKEN_EXPIRE = process.env.RESET_PASSWORD_VERIFICATION_TOKEN_EXPIRE;
 
-function getNanoId() {
+async function getNanoid() {
     return nanoid();
 }
 
@@ -31,7 +31,7 @@ async function getActivationCode() {
 }
 
 //generates a TOKEN for the reset password and verify email apis
-function getVerificationToken() {
+async function getVerificationToken() {
     return nanoid(VERIFICATION_TOKEN_CHARS);
 }
 
@@ -44,7 +44,6 @@ function getActivationCodeExpiry() {
 
 // expiry time of email password reset = current time + set time
 function getResetPasswordCodeExpiryTime() {
-    
     const expiryTime = moment().add(ms(RESET_PASSWORD_VERIFICATION_CODE_EXPIRE), 'ms').toISOString();
     return expiryTime;
 }
@@ -56,7 +55,7 @@ function getResetPasswordTokenExpiryTime() {
 }
 
 module.exports = {
-    getNanoId,
+    getNanoid,
     getVerificationCode,
     getActivationCode,
     getVerificationToken,

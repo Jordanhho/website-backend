@@ -26,7 +26,7 @@ dbConnection.once('open', _ => {
     console.log('Database connected:', dbUrl)
     
     //On startup server remove expired items
-    if (DB_CLEAR_EXPIRED_ITEMS) {
+    if (DB_CLEAR_EXPIRED_ITEMS === "true") {
         clearExpiredTempUsers();
         clearExpiredResetPassUsers();
     }

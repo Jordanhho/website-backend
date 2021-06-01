@@ -8,7 +8,7 @@ const {
 
 
 // handle the API response
-function handleRes(req, res, statusCode, resMsg, debugMsg = null, data = null) {
+function handleRes(req, res, statusCode, resMsg, debugMsg = null, data = false) {
     let isError = false;
 
     let errorMsg = resMsg;
@@ -59,7 +59,6 @@ function handleRes(req, res, statusCode, resMsg, debugMsg = null, data = null) {
             resObj.msg = errorMsg;
         }
     }
-
     return res.status(statusCode).json(resObj);
 }
 

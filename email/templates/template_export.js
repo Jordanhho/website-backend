@@ -8,7 +8,7 @@ const email_templates = {
         subject: 'Password Reset Code',
     },
     password_changed: {
-        fileName: 'password_changed',
+        fileName: 'password_changed.ejs',
         subject: 'Password Changed'
     }
 };

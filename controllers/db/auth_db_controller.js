@@ -54,7 +54,10 @@ async function getUserByEmailAndPassword(email, password) {
             dbDebugMsges("No such user found", email);
             return null;
         }
-        else if (!compareHashedPassword(password, doc.password)) {
+
+        const correctPassword = await compareHashedPassword(password, doc.password);
+
+        if (!correctPassword) {
             dbDebugMsges("Error password does not match", { email, password }, doc);
             return null;
         }
@@ -68,23 +71,20 @@ async function getUserByEmailAndPassword(email, password) {
 
 async function insertUser(dataObj) {
     try {
-        const hashedPassword = await getHashedPassword(dataObj.password);
-
-        const user = new UserModel({
-            email: dataObj.email,
-            password: hashedPassword,
-            firstname: dataObj.firstname,
-            lastname: dataObj.lastname
-        });
-        const doc = await user.save(function (err, doc) {
-            if(err) {
-                dbDebugMsges(err);
-                return null;
-            }
-            return doc;
+        const user = new UserModel(
+            dataObj
+        );
+        const doc = await new Promise((resolve, reject) => {
+            user.save(function (err, doc) {
+                if (err) {
+                    dbDebugMsges(err);
+                    reject(null);
+                }
+                resolve(doc);
+            });
         });
         if (!doc) {
-            dbDebugMsges("Insertion failed, there is already an existing user", user);
+            dbDebugMsges("Insertion failed, there is an existing user", user);
             return null;
         }
         dbDebugMsges("Successfully inserted a user", user, doc);
@@ -97,15 +97,10 @@ async function insertUser(dataObj) {
 
 async function updateUserByEmail(dataObj) {
     try {
-        //if password field exists in userObj, hash it.
-        if (dataObj.password) {
-            const hashedPassword = await getHashedPassword(dataObj.password);
-            dataObj.password = hashedPassword;
-        }
-
         const doc = await UserModel.findOneAndUpdate(
             { email: dataObj.email },
-            dataObj
+            dataObj,
+            { new: true }
         );
         if (!doc) {
             dbDebugMsges("No such user found to update", dataObj.email);
@@ -155,17 +150,16 @@ async function getTempUserByActivationCodeAndEmail(email, activation_code) {
 
 async function upsertTempUser(dataObj) {
     try {
-        const tempUser = new TempUserModel(dataObj);
         const doc = await TempUserModel.findOneAndUpdate(
             { email: dataObj.email },
-            tempUser,
+            dataObj,
             { new: true, upsert: true }
         )
         if (!doc) {
-            dbDebugMsges("No upsert executed, there already exists an identical entry", tempUser.email);
+            dbDebugMsges("No upsert executed, there already exists an identical entry", dataObj.email);
             return null;
         }
-        dbDebugMsges("Successfully upserted a temp user", tempUser.email, doc);
+        dbDebugMsges("Successfully upserted a temp user", dataObj.email, doc);
         return doc;
     } catch (err) {
         dbDebugMsges(err);
@@ -228,16 +222,32 @@ async function getResetPassUserByVerificationCodeAndEmail(email, verification_co
     }
 }
 
+
+async function getResetPassUserByVerificationTokenAndEmail(email, verification_token) {
+    try {
+        const doc = await ResetPassUserModel.findOne({ email: email, verification_token: verification_token });
+        if (!doc) {
+            dbDebugMsges("No such reset pass user found", email);
+            return null;
+        }
+        dbDebugMsges("Successfully found reset pass user", { email, verification_token }, doc);
+        return doc;
+    } catch (err) {
+        dbDebugMsges(err);
+        return null;
+    }
+}
+
+
 async function upsertResetPassUser(dataObj) {
     try {
-        const resetPassUser = new ResetPassUserModel(resetPassUserObj);
         const doc = await ResetPassUserModel.findOneAndUpdate(
             { email: dataObj.email },
-            resetPassUser,
+            dataObj,
             { new: true, upsert: true }
         )
         if (!doc) {
-            dbDebugMsges("No upsert executed, there already exists an identical entry", resetPassUser.email);
+            dbDebugMsges("No upsert executed, there already exists an identical entry", dataObj.email);
             return null;
         }
         dbDebugMsges("Successfully upserted a reset pass user", dataObj.email, doc);
@@ -254,12 +264,13 @@ async function updateResetPassUserByEmail(dataObj) {
         const doc = await ResetPassUserModel.findOneAndUpdate(
             { email: dataObj.email },
             dataObj,
+            { new: true }
         );
         if (!doc) {
             dbDebugMsges("No such reset pass user found to update", dataObj.email);
             return null;
         }
-        dbDebugMsges("Successfully updated reset pass user", dataObj.email, doc);
+        dbDebugMsges("Successfully updated reset pass user", dataObj, doc);
         return doc;
     } catch (err) {
         dbDebugMsges(err);
@@ -317,6 +328,7 @@ module.exports = {
     clearExpiredTempUsers,
 
     getResetPassUserByVerificationCodeAndEmail,
+    getResetPassUserByVerificationTokenAndEmail,
     upsertResetPassUser,
     updateResetPassUserByEmail,
     removeResetPassUserByEmail,

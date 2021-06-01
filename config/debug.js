@@ -31,10 +31,11 @@ function dbDebugMsges(msg, query = null, doc = null) {
     }
 }
 
-function passwordCheckDebugMsges(attemptHashedPassword, hashedPassword) {
+async function passwordCheckDebugMsges(attemptPassword, attemptHashedPassword, hashedPassword) {
     if (NODE_ENV === "development") {
         console.log("\n");
-        console.log("checking passwords: [", attemptHashedPassword, "] : [", hashedPassword, "]")
+        console.log("Checking password for: ", attemptPassword);
+        console.log(`[${attemptHashedPassword}] vs [${hashedPassword}]`);
         console.log("Same password?: [", (attemptHashedPassword === hashedPassword), "]");
     }
 }

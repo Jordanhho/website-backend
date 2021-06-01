@@ -7,15 +7,21 @@ const {
 //set salt gen
 const saltRounds = 10;
 
-const getHashedPassword = (password) => {
+async function getHashedPassword(password) {
     const salt = bcrypt.genSaltSync(saltRounds);
     return bcrypt.hashSync(password, salt);
 }
 
 //compares the attempt hashed password with the hashedpassword from db
-const compareHashedPassword = (attemptHashedPassword, hashedPassword) => {
-    passwordCheckDebugMsges(attemptHashedPassword, hashedPassword);
-    return bcrypt.compareSync(attemptHashedPassword, hashedPassword);
+const compareHashedPassword = async (attemptPassword, hashedPassword) => {
+    //TODO remove this later
+    const attemptHashedPassword = await getHashedPassword(attemptPassword);
+    passwordCheckDebugMsges(attemptPassword, attemptHashedPassword, hashedPassword);
+
+    const same = bcrypt.compareSync(attemptPassword, hashedPassword);
+
+    console.log("same? ", same);
+    return bcrypt.compareSync(attemptPassword, hashedPassword);
 }
 
 const getHashedPasswordAsync = async (password) => {
@@ -42,5 +48,5 @@ const compareHashedPasswordAsync = async (attemptHashedPassword, hashedPassword)
 
 module.exports = { 
     getHashedPassword, 
-    compareHashedPassword
+    compareHashedPassword,
 };

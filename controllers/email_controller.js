@@ -3,7 +3,7 @@ const ejs = require('ejs');
 const { google } = require('googleapis');
 const { OAuth2 } = google.auth;
 
-const SERVER_EMAIL_ENABLE = process.env.SERVER_EMAIL_ENABLE;
+const SERVER_EMAIL_ENABLE = (process.env.SERVER_EMAIL_ENABLE === "true");
 
 const { email_templates } = require("../email/templates/template_export");
 
@@ -56,8 +56,6 @@ async function sendEmail(data) {
             resolve(token);
         });
     });
-
-    console.log("access token: ", accessToken);
 
     const filePath = `${__dirname}/../email/templates/${email_templates[data.template].fileName}`;
 

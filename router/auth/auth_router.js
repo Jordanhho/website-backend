@@ -2,6 +2,7 @@ const express = require('express'),
 router = express.Router();
 
 const moment = require('moment');
+const ms = require('ms');
 
 const apiRoutes = require("../api_routes/auth_api_routes")
 
@@ -34,6 +35,7 @@ const {
     removeTempUserByEmail,
 
     getResetPassUserByVerificationCodeAndEmail,
+    getResetPassUserByVerificationTokenAndEmail,
     upsertResetPassUser,
     updateResetPassUserByEmail,
     removeResetPassUserByEmail
@@ -58,15 +60,22 @@ const {
 } = require("../../config/debug");
 
 const {
+    getNanoid,
     getVerificationCode,
     getActivationCode,
     getVerificationToken,
+    getActivationCodeExpiry,
     getResetPasswordCodeExpiryTime,
     getResetPasswordTokenExpiryTime
 } = require("../../config/verification_gen");
 
 //TODO remove later
-const RECAPTCHA_ENABLE = process.env.RECAPTCHA_ENABLE;
+const RECAPTCHA_ENABLE = (process.env.RECAPTCHA_ENABLE === "true");
+const RESET_PASSWORD_VERIFICATION_CODE_EXPIRE = process.env.RESET_PASSWORD_VERIFICATION_CODE_EXPIRE;
+const EMAIL_VERIFICATION_CODE_EXPIRE = process.env.EMAIL_VERIFICATION_CODE_EXPIRE;
+const WEB_URL = process.env.WEB_URL;
+const REACT_PORT = process.env.REACT_PORT;
+
 
 //** POST REQUESTS **//
 
@@ -99,7 +108,6 @@ router.post(apiRoutes.LOGIN, async function (req, res) {
             req, 
             res, 
             400, 
-            null,
             "Username and Password required."
         );
     }
@@ -113,7 +121,7 @@ router.post(apiRoutes.LOGIN, async function (req, res) {
             req, 
             res, 
             401, 
-            null,
+            "Invalid email or password.",
             "No user was found or incorrect login details"
         );
     }
@@ -304,67 +312,86 @@ router.post(apiRoutes.SIGNUP, function (req, res) {
                 res,
                 200,
                 null,
-                "An email has already been sent to activate your account"
+                "An email has already been sent to activate your account",
+                {
+                    "activation_email_sent": true
+                }
             );
         }
 
-        //TODO if stub account exists, just update the activation_code expiry date only.
+        //If expired link, just re-create the temp account
 
         //no full account exists, or temp account has expired so upsert new temp account
         //create temp account, password hash done in dbcontroller
         //also hash the password
-        const newTempUser = {
-            email: email,
-            password: getHashedPassword(password),
-            firstname: signUpObj.firstname.trim(),
-            lastname: signUpObj.lastname.trim(),
-            activation_code: getActivationCode(),
-            activation_code_expire_at: getActivationCodeExpiry()
-        };
+        const hashedPasswordPromise = new Promise((resolve, reject) => {
+            resolve(getHashedPassword(password));
+        });
+        
+        const activationCodePromise = new Promise((resolve, reject) => {
+            resolve(getActivationCode());
+        });
 
-        //upsert temp user in db
-        const upsertedTempUserDbObj = await upsertTempUser(newTempUser);
+        Promise.all([hashedPasswordPromise, activationCodePromise]).then(async (dataList) => {
+            const hashedPassword = dataList[0];
+            const activation_code = dataList[1];
 
-        if (!upsertedTempUserDbObj) {
-            return handleRes(
-                req, 
-                res, 
-                200, 
-                null,
-                "An error has occured when creating the temp account"
-            );
-        }
+            const newTempUser = {
+                email: email,
+                password: hashedPassword,
+                firstname: signUpObj.firstname.trim(),
+                lastname: signUpObj.lastname.trim(),
+                activation_code: activation_code,
+                activation_code_expire_at: getActivationCodeExpiry()
+            };
 
-        const emailData = {
-            template: "account_activation",
-            to: upsertedTempUserDbObj.email,
-            vars: {
-                activation_code: upsertedTempUserDbObj.activation_code
+            //upsert temp user in db
+            const upsertedTempUserDbObj = await upsertTempUser(newTempUser);
+
+            if (!upsertedTempUserDbObj) {
+                return handleRes(
+                    req,
+                    res,
+                    200,
+                    null,
+                    "An error has occured when creating the temp account"
+                );
             }
-        }
-        try {
-            //send a activation email to created user
-            const info = await sendEmail(
-                emailData
-            );
-            return handleRes(
-                req, 
-                res, 
-                200,
-                null,
-                "An email has been sent to your account for sign up activation",
-                true
-            );
-        } catch (err) {
-            return handleRes(
-                req,
-                res,
-                200,
-                null,
-                "Something happened while attempting to send an email activation",
-                false
-            );
-        }
+
+            const emailData = {
+                template: "account_activation",
+                to: upsertedTempUserDbObj.email,
+                vars: {
+                    activation_code: upsertedTempUserDbObj.activation_code,
+                    expire_in_hours: moment.duration(ms(EMAIL_VERIFICATION_CODE_EXPIRE)).asHours(),
+                    activation_link: `http://${WEB_URL}:${REACT_PORT}/admin/login/activate_account/${upsertedTempUserDbObj.email}/${upsertedTempUserDbObj.activation_code}`
+                }
+            }
+            try {
+                //send a activation email to created user
+                const info = await sendEmail(
+                    emailData
+                );
+                return handleRes(
+                    req,
+                    res,
+                    200,
+                    null,
+                    "An email has been sent to your account for sign up activation",
+                    {
+                        "activation_email_sent": true
+                    }
+                );
+            } catch (err) {
+                return handleRes(
+                    req,
+                    res,
+                    200,
+                    null,
+                    "Something happened while attempting to send an email activation"
+                );
+            }
+        });
     });
 });
 
@@ -379,8 +406,7 @@ router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
             res, 
             200, 
             null,
-            "Missing Required Fields",
-            false
+            "Missing Required Fields"
         );
     }
     
@@ -397,8 +423,7 @@ router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
             200,
             null,
             "Invalid activation code",
-            "No temp user entry was found from activation code and email",
-            false
+            "No temp user entry was found from activation code and email"
         );
     }
     
@@ -409,8 +434,7 @@ router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
             res,
             200,
             "Invalid activation code",
-            "Temp user was found, but the activation code has expired",
-            false
+            "Temp user was found, but the activation code has expired"
         );
     }
 
@@ -422,15 +446,17 @@ router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
             res,
             200,
             "Something went wrong with activating your account",
-            "Failed to delete temp user entry",
-            false
+            "Failed to delete temp user entry"
         );
     }
 
     //now create a new user
     //the password does not need to be hashed as it has been hashed from tempUser db
+    const userid = await getNanoid();
+    
     const newUserObj = {
         email: tempUserDbObj.email,
+        userid: userid,
         password: tempUserDbObj.password,
         firstname: tempUserDbObj.firstname,
         lastname: tempUserDbObj.lastname
@@ -442,8 +468,7 @@ router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
             res,
             200,
             "Something went wrong with activating your account",
-            "Failed to create a new user entry",
-            false
+            "Failed to create a new user entry"
         );
     }
 
@@ -453,7 +478,9 @@ router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
         200, 
         null,
         "Successfully verified user email verification code",
-        true
+        {
+            "activated_account": true
+        }
     );
 });
 
@@ -509,14 +536,17 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
         );
     }
 
+    const verification_code = await getVerificationCode();
+
     //upsert the entry in the reset password user table for this user.
     const newResetPassUserObj = {
         email: userDbObj.email,
-        verification_code: getVerificationCode(),
+        verification_code: verification_code,
         verification_code_expire_at: getResetPasswordCodeExpiryTime(),
         verification_token: null,
         verification_token_expire_at: null
     }
+
     const resetPassUserDbObj = await upsertResetPassUser(newResetPassUserObj);
     if (!resetPassUserDbObj) {
         return handleRes(
@@ -533,7 +563,8 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
         template: "password_reset",
         to: userDbObj.email,
         vars: {
-            verification_code: resetPassUserDbObj.verification_code
+            verification_code: resetPassUserDbObj.verification_code,
+            expire_in_minutes: moment.duration(ms(RESET_PASSWORD_VERIFICATION_CODE_EXPIRE)).asMinutes()
         }
     }
     try {
@@ -546,7 +577,9 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
             200,
             null,
             "An email has been sent to your account for sign up verification",
-            true
+            {
+                email_sent: true
+            }
         );
     } catch (err) {
         return handleRes(
@@ -607,13 +640,17 @@ router.post(apiRoutes.VERIFY_RESET_PASSWORD_CODE, async function (req, res) {
     }
 
     //successfully verified code and not expired. create a verification token and pass it to the user to complete the reset password prcoess
-    const newResetPassUserObj = {
+    const verification_token = await getVerificationToken();
+
+    const updateData = {
         email: resetPassUserDbObj.email,
-        verification_token: getVerificationToken(),
+        verification_code: null,
+        verification_code_expire_at: null,
+        verification_token: verification_token,
         verification_token_expire_at: getResetPasswordTokenExpiryTime()
     }
-    const resetPassUserDbObj = await updateResetPassUserByEmail(newResetPassUserObj);
-    if (!resetPassUserDbObj) {
+    const updatedResetPassUserDbObj = await updateResetPassUserByEmail(updateData);
+    if (!updatedResetPassUserDbObj) {
         return handleRes(
             req,
             res,
@@ -631,19 +668,18 @@ router.post(apiRoutes.VERIFY_RESET_PASSWORD_CODE, async function (req, res) {
         "Successfully verified reset password verification code",
         "Successfully verified verification code",
         {
-            verification_code: resetPassUserDbObj.verification_code
+            verified_code: true,
+            verification_token: updatedResetPassUserDbObj.verification_token
         }
     );
 });
-
-
 
 //on click of forget password, the user sends an email + captcha. If the email exists, it will send it. 
 router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
     apiDebugMsges(apiRoutes.RESET_PASSWORD, req);
 
     if (!req.body.email 
-        || !req.body.verification_code
+        || !req.body.verification_token
         || !req.body.password
         ) {
         return handleRes(
@@ -657,10 +693,10 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
     }
 
     const email = req.body.email.toLowerCase().trim();
-    const verification_code = req.body.verification_code;
+    const verification_token = req.body.verification_token;
     const password = req.body.password.trim();
 
-    const resetPassUserDbObj = await getResetPassUserByVerificationCodeAndEmail(email, verification_code);
+    const resetPassUserDbObj = await getResetPassUserByVerificationTokenAndEmail(email, verification_token);
 
     //if no reset pass user was found 
     if (!resetPassUserDbObj) {
@@ -669,28 +705,30 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             res,
             200,
             null,
-            "Invalid verification code",
-            "No reset pass user entry was found from verification code and email",
+            "Invalid verification token",
+            "No reset pass user entry was found from verification token and email",
             false
         );
     }
 
     //check if expired code
-    if (moment().isAfter(resetPassUserDbObj.verification_code_expire_at)) {
+    if (moment().isAfter(resetPassUserDbObj.verification_token_expire_at)) {
         return handleRes(
             req,
             res,
             200,
-            "Invalid verification code",
-            "Reset pass user was found, but the verification code has expired",
+            "Invalid verification token",
+            "Reset pass user was found, but the verification token has expired",
             false
         );
     }
 
     //modify user
     //hash password
+    const hashedPassword = await getHashedPassword(password);
+  
     let updateUserObj = {
-        password: getHashedPassword(password),
+        password: hashedPassword,
         email: resetPassUserDbObj.email
     }
 
@@ -736,8 +774,10 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             res,
             200,
             null,
-            "An email has been sent to your account to notify of password change",
-            true
+            "An email has been sent to your account to notify password change",
+            {
+                password_changed: true
+            }
         );
     } catch (err) {
         return handleRes(

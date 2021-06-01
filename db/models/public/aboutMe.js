@@ -1,14 +1,9 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const {
-    genID,
-} = require("../../../config/verification_gen");
-
 const AboutMeSchema = new Schema({
     _id: {
-        type: String,
-        default: () => genID()
+        type: String
     },
     email: {
         type: String,

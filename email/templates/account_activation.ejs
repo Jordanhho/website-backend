@@ -1,7 +1,13 @@
-<p>
-    <h1>We have received a request to create an account.</h1>
-    <br/>
-    <h1>Please enter the following activation code to activate your account: </h1>
-    <br />
-    <p><%= activation_code %></p>
-</p>
+<h3>
+    <p>
+        We have received a request to create an account.
+        <br />
+        Please enter the following activation code to activate your account:
+        <span style="color: blue;"><b><%= activation_code %></b></span>
+        <br/>
+        This code will expire in <b><%= expire_in_hours %></b> hours.
+        <br/>
+        Alternatively you can click on the following link to activate your account:
+        <span style="color: blue;"><b><%= activation_link %></b></span>
+    </p>
+</h3>
