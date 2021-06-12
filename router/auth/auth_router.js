@@ -4,7 +4,7 @@ router = express.Router();
 const moment = require('moment');
 const ms = require('ms');
 
-const apiRoutes = require("../api_routes/auth_api_routes")
+const apiRoutes = require("../api_routes/auth_api_routes");
 
 //email
 const {
@@ -20,8 +20,6 @@ const {
     verifyRecaptcha
 } = require("../../config/recaptcha_config");
 
-
-//connect to mongo db server
 const {
     getUserByUserId,
     getUserByEmail,
@@ -45,8 +43,8 @@ const {
 const {
     activeRefreshTokenList,
     COOKIE_OPTIONS,
-    generateAccessToken,
-    generateRefreshToken,
+    genAccessTokenObj,
+    genRefreshToken,
     verifyToken,
     clearTokens,
 } = require("../../config/csrf_jwt_utils");
@@ -128,26 +126,27 @@ router.post(apiRoutes.LOGIN, async function (req, res) {
 
     //generate access token from data in cleanUserObj async
     const accessTokenGenPromise = new Promise((resolve) => {
-        resolve(generateAccessToken(userDbObj));
+        resolve(genAccessTokenObj(userDbObj));
     });
 
     //generate refresh token from userid async
     const refreshTokenGenPromise = new Promise((resolve) => {
-        resolve(generateRefreshToken(userDbObj.userid));
+        resolve(genRefreshToken(userDbObj.userid));
     });
 
-    //attempt to generate both refresh and access token async to speed up process
+    //attempt to generate both refresh and access token object with csrf async to speed up process
     Promise.all([accessTokenGenPromise, refreshTokenGenPromise]).then((dataList) => {
         const accessTokenObj = dataList[0];
         const refreshToken = dataList[1];
 
         //refresh token list to manage the csrf token
-        activeRefreshTokenList[refreshToken] = accessTokenObj.xsrfToken;
+        activeRefreshTokenList[refreshToken] = accessTokenObj.csrfToken;
 
         //set refresh token and csrf token into cookies for response
         res.cookie("refreshToken", refreshToken, COOKIE_OPTIONS);
-        res.cookie("XSRF-TOKEN", accessTokenObj.xsrfToken);
+        res.cookie("XSRF-TOKEN", accessTokenObj.csrfToken);
 
+        //return accessToken to loggedin user
         return handleRes(
             req, 
             res, 
@@ -156,7 +155,7 @@ router.post(apiRoutes.LOGIN, async function (req, res) {
             "Successfully logged in user: " + email,
             {
                 user: userDbObj,
-                refreshToken: accessTokenObj.refreshToken,
+                accessToken: accessTokenObj.accessToken,
                 expiredAt: accessTokenObj.expiredAt
             }
         );
@@ -180,17 +179,19 @@ router.post(apiRoutes.VERIFY_LOGIN_SESSION, function (req, res) {
         );
     }
 
-    // verify xsrf token
-    const xsrfToken = req.headers['x-xsrf-token'];
-    if (!xsrfToken
+    // verify csrf token
+    console.log(req.headers);
+    const csrfToken = req.headers['x-xsrf-token'];
+    console.log(csrfToken);
+    if (!csrfToken
         || !(refreshToken in activeRefreshTokenList)
-        || activeRefreshTokenList[refreshToken] !== xsrfToken) {
+        || activeRefreshTokenList[refreshToken] !== csrfToken) {
         return handleRes(
             req, 
             res, 
             401,
             null,
-            "Either: no csrf token, no refresh token that is active, or invalid refresh token"
+            "Either: no csrf token in req header, no refresh token that is active, or invalid refresh token/csrf token"
         );
     }
 
@@ -217,11 +218,11 @@ router.post(apiRoutes.VERIFY_LOGIN_SESSION, function (req, res) {
             );
         }
         //generate access token
-        const accessTokenObj = await generateAccessToken(userDbObj);
+        const accessTokenObj = await genAccessTokenObj(userDbObj);
 
-        //refresh token list to manage the xsrf token
-        activeRefreshTokenList[refreshToken] = accessTokenObj.xsrfToken;
-        res.cookie('XSRF-TOKEN', accessTokenObj.xsrfToken);
+        //refresh token list to manage the csrf token
+        activeRefreshTokenList[refreshToken] = accessTokenObj.csrfToken;
+        res.cookie('XSRF-TOKEN', accessTokenObj.csrfToken);
 
         // return the token along with user details
         return handleRes(
@@ -232,7 +233,7 @@ router.post(apiRoutes.VERIFY_LOGIN_SESSION, function (req, res) {
             "Successfully verified active refresh token and user",
             {
                 user: userDbObj,
-                refreshToken: accessTokenObj.refreshToken,
+                accessToken: accessTokenObj.accessToken,
                 expiredAt: accessTokenObj.expiredAt
             }
         );
@@ -453,7 +454,7 @@ router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
     //now create a new user
     //the password does not need to be hashed as it has been hashed from tempUser db
     const userid = await getNanoid();
-    
+
     const newUserObj = {
         email: tempUserDbObj.email,
         userid: userid,
@@ -499,8 +500,7 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
             res,
             200,
             null,
-            "Missing Required Fields",
-            false
+            "Missing Required Fields"
         );
     }
 
@@ -515,8 +515,7 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
                 res, 
                 200, 
                 "Something went wrong with sending reset password email",
-                "Something went wrong with recaptcha verification",
-                false
+                "Something went wrong with recaptcha verification"
             );
         }
     }
@@ -531,8 +530,7 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
             res, 
             200, 
             null,
-            "No such user with this email",
-            false
+            "No such user with this email"
         );
     }
 
@@ -554,8 +552,7 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
             res,
             200,
             null,
-            "An error has occured when creating the reset pass user entry",
-            false
+            "An error has occured when creating the reset pass user entry"
         );
     }
 
@@ -587,8 +584,7 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
             res,
             200,
             null,
-            "Something happened while attempting to send an email verification",
-            false
+            "Something happened while attempting to send an email verification"
         );
     }
 });
@@ -604,8 +600,7 @@ router.post(apiRoutes.VERIFY_RESET_PASSWORD_CODE, async function (req, res) {
             res, 
             200, 
             null, 
-            "Missing Required Fields",
-            false
+            "Missing Required Fields"
         );
     }
 
@@ -622,8 +617,7 @@ router.post(apiRoutes.VERIFY_RESET_PASSWORD_CODE, async function (req, res) {
             200,
             null,
             "Invalid verification code",
-            "No reset pass user entry was found from verification code and email",
-            false
+            "No reset pass user entry was found from verification code and email"
         );
     }
 
@@ -634,8 +628,7 @@ router.post(apiRoutes.VERIFY_RESET_PASSWORD_CODE, async function (req, res) {
             res,
             200,
             "Invalid verification code",
-            "Reset pass user was found, but the verification code has expired",
-            false
+            "Reset pass user was found, but the verification code has expired"
         );
     }
 
@@ -656,8 +649,7 @@ router.post(apiRoutes.VERIFY_RESET_PASSWORD_CODE, async function (req, res) {
             res,
             200,
             null,
-            "An error has occured when updating the reset pass user with verification token",
-            false
+            "An error has occured when updating the reset pass user with verification token"
         );
     }
 
@@ -687,8 +679,7 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             res,
             200,
             null,
-            "Missing Required Fields",
-            false
+            "Missing Required Fields"
         );
     }
 
@@ -706,8 +697,7 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             200,
             null,
             "Invalid verification token",
-            "No reset pass user entry was found from verification token and email",
-            false
+            "No reset pass user entry was found from verification token and email"
         );
     }
 
@@ -718,8 +708,7 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             res,
             200,
             "Invalid verification token",
-            "Reset pass user was found, but the verification token has expired",
-            false
+            "Reset pass user was found, but the verification token has expired"
         );
     }
 
@@ -741,8 +730,7 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             res, 
             200, 
             "Something went wrong with changing pasword", 
-            "Failed to update user with new password",
-            false
+            "Failed to update user with new password"
         );
     }
 
@@ -754,8 +742,7 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             res,
             200,
             "Something went wrong with changing pasword",
-            "Failed to delete reset pass user entry",
-            false
+            "Failed to delete reset pass user entry"
         );
     }
 
@@ -785,8 +772,7 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             res,
             200,
             null,
-            "Something happened while attempting to send an email to notify password change",
-            false
+            "Something happened while attempting to send an email to notify password change"
         );
     }
 });

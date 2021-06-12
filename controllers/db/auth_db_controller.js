@@ -5,15 +5,12 @@ const TempUserModel = require("../../db/models/auth/tempUser");
 const ResetPassUserModel = require("../../db/models/auth/resetPassUser");
 
 const {
-    getHashedPassword,
     compareHashedPassword
 } = require("../../config/hashing");
-
 
 const {
     dbDebugMsges
 } = require("../../config/debug");
-
 
 /** User Model **/
 
@@ -25,7 +22,7 @@ async function getUserByEmail(email) {
             return null;
         }
         dbDebugMsges("Successfully found user", email, doc);
-        return doc;
+        return doc.toObject();
     } catch(err) {
         dbDebugMsges(err);
         return null;
@@ -40,7 +37,7 @@ async function getUserByUserId(userid) {
             return null;
         }
         dbDebugMsges("Successfully found user", doc.email, doc);
-        return doc;
+        return doc.toObject();
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -62,18 +59,16 @@ async function getUserByEmailAndPassword(email, password) {
             return null;
         }
         dbDebugMsges("Successfully found user with matching password", { email, password }, doc);
-        return doc;
+        return doc.toObject();
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function insertUser(dataObj) {
+async function insertUser(data) {
     try {
-        const user = new UserModel(
-            dataObj
-        );
+        const user = new UserModel(data);
         const doc = await new Promise((resolve, reject) => {
             user.save(function (err, doc) {
                 if (err) {
@@ -88,26 +83,26 @@ async function insertUser(dataObj) {
             return null;
         }
         dbDebugMsges("Successfully inserted a user", user, doc);
-        return doc;
+        return doc.toObject();
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function updateUserByEmail(dataObj) {
+async function updateUserByEmail(data) {
     try {
         const doc = await UserModel.findOneAndUpdate(
-            { email: dataObj.email },
-            dataObj,
+            { email: data.email },
+            data,
             { new: true }
         );
         if (!doc) {
-            dbDebugMsges("No such user found to update", dataObj.email);
+            dbDebugMsges("No such user found to update", data.email);
             return null;
         }
-        dbDebugMsges("Successfully updated user", dataObj.email, doc);
-        return doc;
+        dbDebugMsges("Successfully updated user", data.email, doc);
+        return doc.toObject();
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -126,7 +121,7 @@ async function getTempUserByEmail(email) {
             return null;
         }
         dbDebugMsges("Successfully found temp user", email, doc);
-        return doc;
+        return doc.toObject();
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -141,26 +136,26 @@ async function getTempUserByActivationCodeAndEmail(email, activation_code) {
             return null;
         }
         dbDebugMsges("Successfully found temp user", email, doc);
-        return doc;
+        return doc.toObject();
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function upsertTempUser(dataObj) {
+async function upsertTempUser(data) {
     try {
         const doc = await TempUserModel.findOneAndUpdate(
-            { email: dataObj.email },
-            dataObj,
+            { email: data.email },
+            data,
             { new: true, upsert: true }
         )
         if (!doc) {
-            dbDebugMsges("No upsert executed, there already exists an identical entry", dataObj.email);
+            dbDebugMsges("No upsert executed, there already exists an identical entry", data.email);
             return null;
         }
-        dbDebugMsges("Successfully upserted a temp user", dataObj.email, doc);
-        return doc;
+        dbDebugMsges("Successfully upserted a temp user", data.email, doc);
+        return doc.toObject();
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -215,7 +210,7 @@ async function getResetPassUserByVerificationCodeAndEmail(email, verification_co
             return null;
         }
         dbDebugMsges("Successfully found reset pass user", { email, verification_code }, doc);
-        return doc;
+        return doc.toObject();
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -231,7 +226,7 @@ async function getResetPassUserByVerificationTokenAndEmail(email, verification_t
             return null;
         }
         dbDebugMsges("Successfully found reset pass user", { email, verification_token }, doc);
-        return doc;
+        return doc.toObject();
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -239,19 +234,19 @@ async function getResetPassUserByVerificationTokenAndEmail(email, verification_t
 }
 
 
-async function upsertResetPassUser(dataObj) {
+async function upsertResetPassUser(data) {
     try {
         const doc = await ResetPassUserModel.findOneAndUpdate(
-            { email: dataObj.email },
-            dataObj,
+            { email: data.email },
+            data,
             { new: true, upsert: true }
         )
         if (!doc) {
-            dbDebugMsges("No upsert executed, there already exists an identical entry", dataObj.email);
+            dbDebugMsges("No upsert executed, there already exists an identical entry", data.email);
             return null;
         }
-        dbDebugMsges("Successfully upserted a reset pass user", dataObj.email, doc);
-        return doc;
+        dbDebugMsges("Successfully upserted a reset pass user", data.email, doc);
+        return doc.toObject();
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -259,19 +254,19 @@ async function upsertResetPassUser(dataObj) {
 }
 
 
-async function updateResetPassUserByEmail(dataObj) {
+async function updateResetPassUserByEmail(data) {
     try {
         const doc = await ResetPassUserModel.findOneAndUpdate(
-            { email: dataObj.email },
-            dataObj,
+            { email: data.email },
+            data,
             { new: true }
         );
         if (!doc) {
-            dbDebugMsges("No such reset pass user found to update", dataObj.email);
+            dbDebugMsges("No such reset pass user found to update", data.email);
             return null;
         }
-        dbDebugMsges("Successfully updated reset pass user", dataObj, doc);
-        return doc;
+        dbDebugMsges("Successfully updated reset pass user", data, doc);
+        return doc.toObject();
     } catch (err) {
         dbDebugMsges(err);
         return null;
