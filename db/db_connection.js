@@ -34,4 +34,5 @@ dbConnection.once('open', _ => {
 dbConnection.on('error', err => {
     console.error('Connection error:', err)
 });
+
 module.exports = dbConnection;

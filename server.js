@@ -45,7 +45,7 @@ const dbConnection = require("./db/db_connection");
 
 const publicRouter = require("./router/public/public_router");
 const authRouter = require("./router/auth/auth_router");
-// const privateRouter = require("./router/private/private)router"); //TODO middleware
+const privateRouter = require("./router/private/private_router"); 
 
 //public
 app.use(publicRouter);
@@ -53,6 +53,7 @@ app.use(publicRouter);
 //routes for csrf and jwt tokens
 app.use(authRouter);
 
+app.use(privateRouter);
 
 app.listen(port, () => {
     console.log(`Listening to ${port}`)
