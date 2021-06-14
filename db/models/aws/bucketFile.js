@@ -11,9 +11,6 @@ const BucketFileSchema = new Schema({
     },
     bucket_key: {
         type: String
-    },
-    github_url: {
-        type: String
     }
 });
 
