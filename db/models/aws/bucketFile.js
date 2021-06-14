@@ -4,13 +4,13 @@ const Schema = mongoose.Schema;
 //table for storing aws bucket key, link and expiry of link
 const BucketFileSchema = new Schema({
     url: {
-        type: String,
+        type: String
     },
     expire_at: {
-        type: String,
+        type: String
     },
     bucket_key: {
-        type: String,
+        type: String
     }
 });
 

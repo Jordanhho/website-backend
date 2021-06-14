@@ -12,6 +12,7 @@ const {
 } = require("../response");
 
 const {
+    getApps,
     getAboutMe,
 } = require("../../controllers/db/public_db_controller");
 
@@ -22,6 +23,7 @@ const {
 const {
     getRenewedS3UrlBucketFile
 } = require("../../controllers/aws_s3_controller");
+
 
 //** GET REQUESTS **//
 router.get(apiRoutes.HOME, function (req, res) {
@@ -77,8 +79,6 @@ router.get(apiRoutes.ABOUT_ME, async function (req, res) {
         delete data._id;
         delete data.__v;
 
-        console.log("returning: ", data);
-
         return handleRes(
             req,
             res,
@@ -91,8 +91,35 @@ router.get(apiRoutes.ABOUT_ME, async function (req, res) {
 });
 
 
-router.get(apiRoutes.APPS, function (req, res) {
+router.get(apiRoutes.APPS, async function (req, res) {
+    apiDebugMsges(apiRoutes.APPS, req);
 
+    let data = await getApps();
+
+    if (!data) {
+        return handleRes(
+            req,
+            res,
+            200,
+            null,
+            "Something went wrong",
+        );
+    }
+
+    //remove sensitive information
+    for(let i = 0; i < data.length; i++) {
+        delete data[i]._id;
+        delete data[i].__v;
+    }
+
+    return handleRes(
+        req,
+        res,
+        200,
+        null,
+        "Sending Apps Data",
+        data
+    );
 });
 
 module.exports = router;
