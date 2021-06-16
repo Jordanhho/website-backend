@@ -24,10 +24,79 @@ const {
     getRenewedS3UrlBucketFile
 } = require("../../controllers/aws_s3_controller");
 
+const {
+    getCityWeather,
+    getWeatherIcon
+} = require("../../controllers/open_weather_controller");
+
+const {
+    getPublicImage
+} = require("../../controllers/aws_cloudfront_controller");
 
 //** GET REQUESTS **//
-router.get(apiRoutes.HOME, function (req, res) {
-    
+router.get(apiRoutes.HOME, async function (req, res) {
+    const weatherResult = await getCityWeather("Vancouver");
+    const weatherData = weatherResult.data;
+
+    const homeData = {
+        city: weatherData.name,
+        country: weatherData.sys.country,
+        temperature_degrees: Math.trunc(weatherData.main.temp), //Only whole celcius degrees
+        weather_description: weatherData.weather[0].description,
+        icon_url: getWeatherIcon(weatherData.weather[0].icon),
+        website_github: {
+            backend_url: "https://github.com/Jordanhho/website-backend",
+            frontend_url: "https://github.com/Jordanhho/website-frontend"
+        },
+        technologies: {
+            reactjs: {
+                url: "https://reactjs.org/",
+                logo: getPublicImage("reactjs_logo.png")
+            },
+            redux: {
+                url: "https://react-redux.js.org/",
+                logo: getPublicImage("redux_logo.png")
+            },
+            material_ui: {
+                url: "https://material-ui.com/",
+                logo: getPublicImage("material_ui_logo.png")
+            },
+            fontawesome: {
+                url: "https://fontawesome.com/",
+                logo: getPublicImage("fontawesome_logo.png")
+            },
+            expressjs: {
+                url: "https://expressjs.com/",
+                logo: getPublicImage("expressjs_logo.png")
+            },
+            mongodb: {
+                url: "https://www.mongodb.com/",
+                logo: getPublicImage("mongodb_logo.png")
+            },
+            aws_s3: {
+                url: "https://aws.amazon.com/s3/",
+                logo: getPublicImage("aws_s3_logo.png")
+            },
+            aws_cloudfront: {
+                url: "https://aws.amazon.com/cloudfront/",
+                logo: getPublicImage("aws_cloudfront_logo.png")
+            },
+            nodejs: {
+                url: "https://nodejs.org/en/",
+                logo: getPublicImage("nodejs_logo.png")
+            }
+        }
+    }
+
+    return handleRes(
+        req,
+        res,
+        200,
+        null,
+        "Sending Home Data",
+        homeData
+    );
+
 });
 
 router.get(apiRoutes.ABOUT_ME, async function (req, res) {
@@ -89,7 +158,6 @@ router.get(apiRoutes.ABOUT_ME, async function (req, res) {
         );
     });
 });
-
 
 router.get(apiRoutes.APPS, async function (req, res) {
     apiDebugMsges(apiRoutes.APPS, req);

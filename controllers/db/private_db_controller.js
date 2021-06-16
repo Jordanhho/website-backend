@@ -5,6 +5,7 @@ const {
     dbDebugMsges
 } = require("../../config/debug");
 
+/** initialization of db collections */
 async function initApps() {
     const initData = {
         firstname: "Jordan",
@@ -170,6 +171,9 @@ async function updateAboutMe(data) {
 }
 
 module.exports = {
+    initAboutMe,
+    initApps,
+
     insertApp,
     upsertAppDetails,
     removeAppDetailById,

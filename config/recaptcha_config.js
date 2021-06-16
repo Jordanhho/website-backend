@@ -7,12 +7,8 @@ function verifyRecaptcha(req) {
         if (!req.body.recaptcha_token || !req.connection.remoteAddress) {
             resolve(false);
         }
-        console.log(req.body.recaptcha_token)
-        console.log(req.connection.remoteAddress);
 
         const url = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${req.body.recaptcha_token}&remoteip=${req.connection.remoteAddress}`;
-
-        console.log(url);
 
         fetch(url, {
             method: "post",
