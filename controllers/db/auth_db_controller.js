@@ -21,7 +21,7 @@ async function getUserByEmail(email) {
             dbDebugMsges("No such user found", email);
             return null;
         }
-        dbDebugMsges("Successfully found user", email, doc);
+        dbDebugMsges("Successfully found user by email", email, doc);
         return doc.toObject();
     } catch(err) {
         dbDebugMsges(err);
@@ -36,7 +36,7 @@ async function getUserByUserId(userid) {
             dbDebugMsges("No such user found", userid);
             return null;
         }
-        dbDebugMsges("Successfully found user", doc.email, doc);
+        dbDebugMsges("Successfully found user by userid", userid, doc);
         return doc.toObject();
     } catch (err) {
         dbDebugMsges(err);

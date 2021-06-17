@@ -16,12 +16,11 @@ async function getHashedPassword(password) {
 const compareHashedPassword = async (attemptPassword, hashedPassword) => {
     //TODO remove this later
     const attemptHashedPassword = await getHashedPassword(attemptPassword);
-    passwordCheckDebugMsges(attemptPassword, attemptHashedPassword, hashedPassword);
+    
+    const isSamePassword = await bcrypt.compareSync(attemptPassword, hashedPassword);
+    passwordCheckDebugMsges(attemptPassword, isSamePassword);
 
-    const same = bcrypt.compareSync(attemptPassword, hashedPassword);
-
-    console.log("same? ", same);
-    return bcrypt.compareSync(attemptPassword, hashedPassword);
+    return isSamePassword;
 }
 
 const getHashedPasswordAsync = async (password) => {

@@ -6,6 +6,11 @@ const ms = require('ms');
 
 const apiRoutes = require("../api_routes/auth_api_routes");
 
+const {
+    local_admin_settings
+} = require("../../config/admin_settings");
+
+
 //email
 const {
     sendEmail
@@ -74,7 +79,6 @@ const EMAIL_VERIFICATION_CODE_EXPIRE = process.env.EMAIL_VERIFICATION_CODE_EXPIR
 const WEB_URL = process.env.WEB_URL;
 const REACT_PORT = process.env.REACT_PORT;
 
-
 //** POST REQUESTS **//
 
 
@@ -111,7 +115,11 @@ router.post(apiRoutes.LOGIN, async function (req, res) {
     }
 
     //Find user in db by password and email
-    const userDbObj = await getUserByEmailAndPassword(email, password);
+    let userDbObj = await getUserByEmailAndPassword(email, password);
+
+    //remove _id and __v
+    delete userDbObj._id;
+    delete userDbObj.__v;
 
     //return 404 if no such user exists in db or password/email is incorrect
     if (!userDbObj) {
@@ -121,6 +129,17 @@ router.post(apiRoutes.LOGIN, async function (req, res) {
             401, 
             "Invalid email or password.",
             "No user was found or incorrect login details"
+        );
+    }
+    
+    //check if user is admin level, then if so, allow pass.
+    if (userDbObj.level !== "ADMIN") {
+        return handleRes(
+            req,
+            res,
+            401,
+            "Unauthorized",
+            "User is not an ADMIN Level"
         );
     }
 
@@ -139,9 +158,12 @@ router.post(apiRoutes.LOGIN, async function (req, res) {
         const accessTokenObj = dataList[0];
         const refreshToken = dataList[1];
 
-        //refresh token list to manage the csrf token
-        activeRefreshTokenList[refreshToken] = accessTokenObj.csrfToken;
-
+        //store email and csrf with refresh token as the key in session list to track active users
+        activeRefreshTokenList[refreshToken] = {
+            "csrfToken": accessTokenObj.csrfToken,
+            "email": userDbObj.email
+        }
+        
         //set refresh token and csrf token into cookies for response
         res.cookie("refreshToken", refreshToken, COOKIE_OPTIONS);
         res.cookie("XSRF-TOKEN", accessTokenObj.csrfToken);
@@ -180,12 +202,10 @@ router.post(apiRoutes.VERIFY_LOGIN_SESSION, function (req, res) {
     }
 
     // verify csrf token
-    console.log(req.headers);
     const csrfToken = req.headers['x-xsrf-token'];
-    console.log(csrfToken);
     if (!csrfToken
         || !(refreshToken in activeRefreshTokenList)
-        || activeRefreshTokenList[refreshToken] !== csrfToken) {
+        || activeRefreshTokenList[refreshToken].csrfToken !== csrfToken) {
         return handleRes(
             req, 
             res, 
@@ -221,7 +241,11 @@ router.post(apiRoutes.VERIFY_LOGIN_SESSION, function (req, res) {
         const accessTokenObj = await genAccessTokenObj(userDbObj);
 
         //refresh token list to manage the csrf token
-        activeRefreshTokenList[refreshToken] = accessTokenObj.csrfToken;
+        activeRefreshTokenList[refreshToken] = {
+            csrfToken: accessTokenObj.csrfToken,
+            email: userDbObj.email
+        }
+        
         res.cookie('XSRF-TOKEN', accessTokenObj.csrfToken);
 
         // return the token along with user details
@@ -260,6 +284,17 @@ router.post(apiRoutes.LOGOUT, (req, res) => {
 //user signup api
 router.post(apiRoutes.SIGNUP, function (req, res) {
     apiDebugMsges(apiRoutes.SIGNUP, req);
+
+    //if sign up disabled, return unauthorized
+    if (!local_admin_settings.enable_new_accounts) {
+        return handleRes(
+            req,
+            res,
+            401,
+            "Unauthorized",
+            "Sign ups has been disabled"
+        );
+    }
 
     //check if data is empty
     if (!req.body.email
@@ -401,6 +436,17 @@ router.post(apiRoutes.SIGNUP, function (req, res) {
 router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
     apiDebugMsges(apiRoutes.ACTIVATE_ACCOUNT, req);
 
+    //if sign up disabled, return unauthorized
+    if (!local_admin_settings.enable_new_accounts) {
+        return handleRes(
+            req,
+            res,
+            401,
+            "Unauthorized",
+            "Sign ups has been disabled"
+        );
+    }
+
     if (!req.body.email || !req.body.activation_code) {
         return handleRes(
             req, 
@@ -493,6 +539,17 @@ router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
 // on click send email to reset password
 router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
     apiDebugMsges(apiRoutes.SEND_RESET_PASSWORD_EMAIL, req);
+
+    //if sign up disabled, return unauthorized
+    if (!local_admin_settings.enable_change_password || !local_admin_settings.enable_sending_email) {
+        return handleRes(
+            req,
+            res,
+            401,
+            "Unauthorized",
+            "Changing passwords have been disabled or email has been disabled"
+        );
+    }
 
     if (!req.body.recaptcha_token || !req.body.email) {
         return handleRes(
@@ -594,6 +651,17 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
 router.post(apiRoutes.VERIFY_RESET_PASSWORD_CODE, async function (req, res) {
     apiDebugMsges(apiRoutes.VERIFY_RESET_PASSWORD_CODE, req);
 
+    //if sign up disabled, return unauthorized
+    if (!local_admin_settings.enable_change_password || !local_admin_settings.enable_sending_email) {
+        return handleRes(
+            req,
+            res,
+            401,
+            "Unauthorized",
+            "Changing passwords have been disabled or email has been disabled"
+        );
+    }
+
     if (!req.body.email || !req.body.verification_code) {
         return handleRes(
             req, 
@@ -669,6 +737,17 @@ router.post(apiRoutes.VERIFY_RESET_PASSWORD_CODE, async function (req, res) {
 //on click of forget password, the user sends an email + captcha. If the email exists, it will send it. 
 router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
     apiDebugMsges(apiRoutes.RESET_PASSWORD, req);
+
+    //if sign up disabled, return unauthorized
+    if (!local_admin_settings.enable_change_password) {
+        return handleRes(
+            req,
+            res,
+            401,
+            "Unauthorized",
+            "Changing Passwords Has been disabled"
+        );
+    }
 
     if (!req.body.email 
         || !req.body.verification_token

@@ -1,83 +1,87 @@
-# website-backend
+# Personal Website Backend
 
-to run:
-nodemon server.js
+## Project Description
+This project is to develop my personal website's backend to serve APIs to the frontend. This is a NodeJS ExpressJS backend server with a MongoDB database. The backend APIs use a variety of techonologies such as AWS S3 and AWS CloudFront to serve images, upload and store files. It also uses nodemailer and EJS for email purposes.
 
+## Technologies
+The backend uses the following frameworks and technologies:
+- [ExpressJS](https://expressjs.com/)
+- [MongoDB](https://www.mongodb.com/)
+- [Mongoose](https://mongoosejs.com/)
+- [AWS S3](https://material-ui.com/)
+- [AWS CloudFront](https://fontawesome.com/)
+- [NodeJS](https://lodash.com/)
+- [Recaptcha](https://www.google.com/recaptcha/about/)
+- [MomentJS](https://momentjs.com/)
+- [axios](https://www.axios.com/)
+- [NodeMailer](https://nodemailer.com/about/)
+- [EJS](https://ejs.co/)
 
-https://www.npmjs.com/package/sanitize-html
+## NPM Packages
+This application uses the following npm packages:
 
-nextcloud for hosting file
+### ExpressJS
+- express
+- body-parser
+- cookie-paser
+- cors
+- dotenv
+- node-fetch
 
+### MongoDB
+- mongodb
+- mongoose
+- express-mongo-sanitize
 
-for backend https://www.npmjs.com/package/helmet
+### AWS 
+- aws-sdk
+- multer
 
-to host server local truenas server
+### GoogleAPIS:
+- googleapis
 
+### Authentication and Security
+- jsonwebtoken
+- helmet
+- bcrypt
+- nanoid
+- moment
+- ms
 
- npm cors https://www.npmjs.com/package/cors
-npm dotenv  https://www.npmjs.com/package/dotenv
+### Email:
+- nodemailer
+- ejs
 
-npm moment  https://www.npmjs.com/package/moment
-npm ms https://www.npmjs.com/package/ms
-npm jsonwebtoken https://www.npmjs.com/package/jsonwebtoken
+### Utilities:
+- lodash
 
-Bcrypto for hashing passwords https://www.npmjs.com/package/bcrypt
-mongoose and mongo db for database management
+## Requirements
+This project is not meant to be used outside of my personal use without the environmental variable file.
 
-for secure uuid generation and tokens
-nanoid https://www.npmjs.com/package/nanoid
+## How to Run the project
+1. Clone the project to your local directory:
 
-mongoose sanitize for express https://www.npmjs.com/package/express-mongo-sanitize
+2. install all npm packages
+``` 
+    $ npm install
+```
+3.  To run the project in development mode with auto restart:
+``` 
+    $ npm run dev_start
+```
+3.  To run the project:
+``` 
+    $ npm run start
+```
 
-
-npm https://www.npmjs.com/package/helmet
-for securing express apps with http headers
-
-amazon s3 storage with multer
-
-googleapis npm
-ejs npm email templates
-
-node-fetch for external requests
-https://www.npmjs.com/package/node-fetch
-
-.env file:
-
-JWT_SECRET – Use it to create JWT access token and refresh token.
-ACCESS_TOKEN_LIFE – Define the life of the access token so we can use it to set the expiry time of the access token. We have considered the 15 mins (15m).
-REFRESH_TOKEN_LIFE – Same as the access token we will define the life of the refresh token. It should be longer than the access token so we have considered the 30 days (30d).
-COOKIE_SECRET – We’ll use this secret key for cookie parsing as we discussed in the above topic.
-NODE_ENV – It’s used to set the environment of the project.
-
-To use all these variables, we have to add require('dotenv').config();
-
-
-
-
-
-
-
-
-
-style guide:
-
-
-naming:
-Filename: all lowercase and only underscores ie: file_name
-React Class: CamelCase upper
-
-javascript variable naming:
-class = CamelCase;
-variable: lower camelCase;
-
-javascript function names:
-variable: lower camelCase;
-
-url naming:
-all lower case and only hyphens ie: url-something
-for parameters use ?value, value corresponding paramter is given after symbol =, multiple paramters seperated by &
-
-dataabse/form names:
-all lowercase, underscores allowed.
-
-database dates are stored as ISO 8601
+## To refresh email testing
+1. Go to Oauth Playground
+2. Find the cog button at top right.
+3. Check the Use your own OAuth Credentials and enter them.
+4. Under the Step 1 Select & Authorize API, find "Gmail API v1" and select https://mail.google.com/
+5. Click on authorize APIs
+6. If any pages that follows to allow google oauth 2.0 playground to your gmail account allow
+7. After being redirected back to the OAuth 2.0 Playground,
+click the Exchange authorization code for tokens button under the Exchange authorization code for tokens section.
+8. Once refresh and token is generated copy the data and save it into your .env file.
+[guide](https://dev.to/chandrapantachhetri/sending-emails-securely-using-node-js-nodemailer-smtp-gmail-and-oauth2-g3a)

@@ -12,10 +12,12 @@ const {
 } = require("../response");
 
 const {
+    getApps,
     getAboutMe,
 } = require("../../controllers/db/public_db_controller");
 
 const {
+    getAdminSettings,
     updateAboutMe
 } = require("../../controllers/db/private_db_controller");
 
@@ -23,9 +25,108 @@ const {
     getRenewedS3UrlBucketFile
 } = require("../../controllers/aws_s3_controller");
 
-//** GET REQUESTS **//
-router.get(apiRoutes.HOME, function (req, res) {
-    
+const {
+    getCityWeather,
+    getWeatherIcon
+} = require("../../controllers/open_weather_controller");
+
+const {
+    getPublicImage
+} = require("../../controllers/aws_cloudfront_controller");
+
+
+/** GET Requests */
+router.get(apiRoutes.LOGIN_SETTINGS, async function (req, res) {
+    let adminSettings = await getAdminSettings();
+
+    let data = {
+        enable_new_accounts: adminSettings.enable_new_accounts,
+        enable_emailing: adminSettings.enable_emailing,
+        enable_change_password: adminSettings.enable_change_password
+    }
+
+    if (!data) {
+        return handleRes(
+            req,
+            res,
+            200,
+            null,
+            "Something went wrong",
+        );
+    }
+
+    return handleRes(
+        req,
+        res,
+        200,
+        null,
+        "Sending Login Settings",
+        data
+    );
+});
+
+router.get(apiRoutes.HOME, async function (req, res) {
+    const weatherResult = await getCityWeather("Vancouver");
+    const weatherData = weatherResult.data;
+
+    const homeData = {
+        city: weatherData.name,
+        country: weatherData.sys.country,
+        temperature_degrees: Math.trunc(weatherData.main.temp), //Only whole celcius degrees
+        weather_description: weatherData.weather[0].description,
+        icon_url: getWeatherIcon(weatherData.weather[0].icon),
+        website_github: {
+            backend_url: "https://github.com/Jordanhho/website-backend",
+            frontend_url: "https://github.com/Jordanhho/website-frontend"
+        },
+        technologies: {
+            reactjs: {
+                url: "https://reactjs.org/",
+                logo: getPublicImage("reactjs_logo.png")
+            },
+            redux: {
+                url: "https://react-redux.js.org/",
+                logo: getPublicImage("redux_logo.png")
+            },
+            material_ui: {
+                url: "https://material-ui.com/",
+                logo: getPublicImage("material_ui_logo.png")
+            },
+            fontawesome: {
+                url: "https://fontawesome.com/",
+                logo: getPublicImage("fontawesome_logo.png")
+            },
+            expressjs: {
+                url: "https://expressjs.com/",
+                logo: getPublicImage("expressjs_logo.png")
+            },
+            mongodb: {
+                url: "https://www.mongodb.com/",
+                logo: getPublicImage("mongodb_logo.png")
+            },
+            aws_s3: {
+                url: "https://aws.amazon.com/s3/",
+                logo: getPublicImage("aws_s3_logo.png")
+            },
+            aws_cloudfront: {
+                url: "https://aws.amazon.com/cloudfront/",
+                logo: getPublicImage("aws_cloudfront_logo.png")
+            },
+            nodejs: {
+                url: "https://nodejs.org/en/",
+                logo: getPublicImage("nodejs_logo.png")
+            }
+        }
+    }
+
+    return handleRes(
+        req,
+        res,
+        200,
+        null,
+        "Sending Home Data",
+        homeData
+    );
 });
 
 router.get(apiRoutes.ABOUT_ME, async function (req, res) {
@@ -70,14 +171,17 @@ router.get(apiRoutes.ABOUT_ME, async function (req, res) {
 
         //specifically set resume as resume url and same with profile picture, then remove their objects 
         //remove sensitive information from data
-        data['resume_url'] = data.resume.url;
-        data['profile_picture_url'] = data.profile_picture.url;
-        delete data.resume;
-        delete data.profile_picture;
+        if(data.resume) {
+            data['resume_url'] = data.resume.url;
+            delete data.resume;
+        }
+        if (data.profile_picture) {
+            data['profile_picture_url'] = data.profile_picture.url;
+            delete data.profile_picture;
+        }
+
         delete data._id;
         delete data.__v;
-
-        console.log("returning: ", data);
 
         return handleRes(
             req,
@@ -90,9 +194,35 @@ router.get(apiRoutes.ABOUT_ME, async function (req, res) {
     });
 });
 
+router.get(apiRoutes.APPS, async function (req, res) {
+    apiDebugMsges(apiRoutes.APPS, req);
 
-router.get(apiRoutes.APPS, function (req, res) {
+    let data = await getApps();
 
+    if (!data) {
+        return handleRes(
+            req,
+            res,
+            200,
+            null,
+            "Something went wrong",
+        );
+    }
+
+    //remove sensitive information
+    for(let i = 0; i < data.length; i++) {
+        delete data[i]._id;
+        delete data[i].__v;
+    }
+
+    return handleRes(
+        req,
+        res,
+        200,
+        null,
+        "Sending Apps Data",
+        data
+    );
 });
 
 module.exports = router;

@@ -78,6 +78,10 @@ async function getS3UrlBucketFile(bucket_key) {
 //given a bucket name item, return the signed url and if its expired, request the object again.
 //if it hasn't expired, return null 
 async function getRenewedS3UrlBucketFile(bucketObject) {
+    if(!bucketObject) {
+        return null;
+    }
+
     //check if signed url has expired, otherwise just return the url
     if (moment().isAfter(bucketObject.expire_at)) {
         return await getS3UrlBucketFile(bucketObject.bucket_key);
