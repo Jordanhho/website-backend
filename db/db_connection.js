@@ -7,6 +7,10 @@ const {
     clearExpiredResetPassUsers
 } = require("../controllers/db/auth_db_controller");
 
+const {
+    initLocalAdminSettings
+} = require("../config/admin_settings");
+
 //to fix issues with mongoose
 mongoose.set('useNewUrlParser', true);
 mongoose.set('useFindAndModify', false);
@@ -22,7 +26,7 @@ const dbUrl = 'mongodb+srv://' + DB_USERNAME + ':' + DB_PASSWORD + '@cluster0.6h
 mongoose.connect(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true });
 
 const dbConnection = mongoose.connection;
-dbConnection.once('open', _ => {
+dbConnection.once('open', async _ => {
     console.log('Database connected:', dbUrl)
     
     //On startup server remove expired items
@@ -30,6 +34,9 @@ dbConnection.once('open', _ => {
         clearExpiredTempUsers();
         clearExpiredResetPassUsers();
     }
+
+    //on startup setup admin settings
+    await initLocalAdminSettings();
 });
 dbConnection.on('error', err => {
     console.error('Connection error:', err)

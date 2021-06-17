@@ -73,3 +73,15 @@ This project is not meant to be used outside of my personal use without the envi
 ``` 
     $ npm run start
 ```
+
+## To refresh email testing
+1. Go to Oauth Playground
+2. Find the cog button at top right.
+3. Check the Use your own OAuth Credentials and enter them.
+4. Under the Step 1 Select & Authorize API, find "Gmail API v1" and select https://mail.google.com/
+5. Click on authorize APIs
+6. If any pages that follows to allow google oauth 2.0 playground to your gmail account allow
+7. After being redirected back to the OAuth 2.0 Playground,
+click the Exchange authorization code for tokens button under the Exchange authorization code for tokens section.
+8. Once refresh and token is generated copy the data and save it into your .env file.
+[guide](https://dev.to/chandrapantachhetri/sending-emails-securely-using-node-js-nodemailer-smtp-gmail-and-oauth2-g3a)

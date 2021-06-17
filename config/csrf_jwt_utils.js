@@ -6,6 +6,7 @@ const ms = require("ms");
 const dev = process.env.NODE_ENV !== "production";
 
 // active refresh token list stored on server to manage the csrf token
+//active session list where each key is the refresh token, the value is a object with the fields email and csrf token
 const activeRefreshTokenList = {};
 
 const CSRF_TOKEN_LENGTH = 32;

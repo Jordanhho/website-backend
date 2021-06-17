@@ -53,12 +53,11 @@ function dbDebugMsges(msg, query = null, doc = null) {
     }
 }
 
-async function passwordCheckDebugMsges(attemptPassword, attemptHashedPassword, hashedPassword) {
+async function passwordCheckDebugMsges(attemptPassword, isSamePassword) {
     if (NODE_ENV === "development") {
         console.log("\n");
         console.log("Checking password for: ", attemptPassword);
-        console.log(`[${attemptHashedPassword}] vs [${hashedPassword}]`);
-        console.log("Same password?: [", (attemptHashedPassword === hashedPassword), "]");
+        console.log("Matches password in db? ", isSamePassword);
     }
 }
 

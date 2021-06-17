@@ -11,10 +11,16 @@ const {
     apiDebugAuthMiddleware
 } = require("./debug");
 
+
+const {
+    getUserByEmail
+} = require("../controllers/db/auth_db_controller");
+
+
 // middleware that checks if JWT token exists and verifies it if it does exist.
 // this is used for routes when the user is logged in. 
-const authMiddleware = function (req, res, next) {
-    // apiDebugAuthMiddleware(req);
+const authMiddleware = async function (req, res, next) {
+    apiDebugAuthMiddleware(req);
 
     // check header or url parameters or post parameters for accessToken
     var accessToken = req.headers['authorization'];
@@ -45,7 +51,7 @@ const authMiddleware = function (req, res, next) {
     const { refreshToken } = signedCookies;
     if (!refreshToken
         || !(refreshToken in activeRefreshTokenList)
-        || activeRefreshTokenList[refreshToken] !== csrfToken
+        || activeRefreshTokenList[refreshToken].csrfToken !== csrfToken
     ) {
         return handleRes(
             req,
@@ -56,7 +62,7 @@ const authMiddleware = function (req, res, next) {
     }
 
     // verify token with secret key and csrf token
-    verifyToken(accessToken, csrfToken, (err, payload) => {
+    await verifyToken(accessToken, csrfToken, async (err, payload) => {
         if (err)
             return handleRes(
                 req,
@@ -66,6 +72,21 @@ const authMiddleware = function (req, res, next) {
             );
         else {
             req.user = payload; //set the user to req so other routes can use it
+
+            //email can also be taken from activeRefreshTokenList
+            const email = payload.email;
+            const userDbObj = await getUserByEmail(email);
+
+            //check if user is admin level, then if so, allow pass.
+            if (userDbObj.level !== "ADMIN") {
+                return handleRes(
+                    req,
+                    res,
+                    401,
+                    "Unauthorized",
+                    "User is not an ADMIN Level"
+                );
+            }
             next();
         }
     });
