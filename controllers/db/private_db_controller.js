@@ -1,6 +1,6 @@
 const AboutMe = require("../../db/models/public/aboutMe");
 const AppDetails = require("../../db/models/public/appDetails");
-const AdminSettings = require("../../db/models/admin/adminSettings");
+const AdminSettings = require("../../db/models/settings/adminSettings");
 
 const {
     dbDebugMsges
