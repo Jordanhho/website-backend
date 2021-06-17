@@ -9,10 +9,16 @@ const {
 } = require("../../config/authMiddleware");
 
 const {
+    getAdminSettings,
+    updateAdminSettings,
     upsertAppDetails,
     removeAppDetailById,
     updateAboutMe
 } = require("../../controllers/db/private_db_controller");
+
+const {
+    updateLocalAdminSettings
+} = require("../../config/admin_settings");
 
 const {
     handleRes
@@ -27,6 +33,33 @@ const {
 const RESUME_BUCKET_KEY = "jordan_resume.pdf";
 const PROFILE_PICTURE_BUCKET_KEY = "jordan_profile_picture.jpg";
 
+/* GET */
+//to get settings such as disable add account, emailing
+router.get(apiRoutes.GET_ADMIN_SETTINGS, authMiddleware, async (req, res) => {
+    let adminSettings = await getAdminSettings();
+
+    if(!adminSettings) {
+        return handleRes(
+            req,
+            res,
+            200,
+            "Something went wrong"
+        );
+    }
+
+    return handleRes(
+        req,
+        res,
+        200,
+        null,
+        "Got Admin Home Data",
+        adminSettings
+    );
+});
+
+
+
+//* POST */
 router.post(apiRoutes.UPDATE_ABOUT_ME, authMiddleware, upload.fields(
     [
         { name: 'resume', maxCount: 1 }, 
@@ -36,9 +69,12 @@ router.post(apiRoutes.UPDATE_ABOUT_ME, authMiddleware, upload.fields(
 
     //check if data is empty
     if (!req.body.education_description
-        || !req.body.experience_description
-        || !req.body.specialization_description
+        || !req.body.school_experience_description
+        || !req.body.work_experience_description
+        || !req.body.skill_specialization_description
         || !req.body.hobby_description
+        || !req.body.esports_description
+        || !req.body.goal_description
         ) {
         return handleRes(
             req,
@@ -226,4 +262,49 @@ router.post(apiRoutes.REMOVE_APP, authMiddleware, async (req, res) => {
         "Successfully removed app"
     );
 });
+
+//to update ettings such as disable add account, emailing
+router.post(apiRoutes.UPDATE_ADMIN_SETTINGS, authMiddleware, async (req, res) => {
+
+    //check if data is empty
+    if (!req.body.adminSettings) {
+        return handleRes(
+            req,
+            res,
+            200,
+            null,
+            "Missing Required Fields"
+        );
+    }
+
+    const adminSettings = req.body.adminSettings;
+    let updatedAdminSettings = await updateAdminSettings(adminSettings);
+
+    if (!updatedAdminSettings) {
+        return handleRes(
+            req,
+            res,
+            200,
+            null,
+            "Something went wrong with updating admin home settings"
+        );
+    }
+
+    //delete _id and __v
+    delete updatedAdminSettings._id;
+    delete updatedAdminSettings.__v;
+
+    //also update local admin settings
+    updateLocalAdminSettings(updatedAdminSettings);
+
+    return handleRes(
+        req,
+        res,
+        200,
+        null,
+        "Successfully updated admin home settings",
+        updatedAdminSettings
+    );
+});
+
 module.exports = router;

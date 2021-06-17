@@ -20,16 +20,25 @@ const AboutMeSchema = new Schema({
         required: true
     },
     education_description: {
-        type: String,
+        type: String
     },
-    experience_description: {
-        type: String,
+    school_experience_description: {
+        type: String
     },
-    specialization_description: {
-        type: String,
+    work_experience_description: {
+        type: String
+    },
+    skill_specialization_description: {
+        type: String
     },
     hobby_description: {
-        type: String,
+        type: String
+    },
+    esports_description: {
+        type: String
+    },
+    goal_description: {
+        type: String
     },
     crossfire_profile_url: {
         type: String,

@@ -1,34 +1,18 @@
 const AboutMe = require("../../db/models/public/aboutMe");
 const AppDetails = require("../../db/models/public/appDetails");
+const AdminSettings = require("../../db/models/admin/adminSettings");
 
 const {
     dbDebugMsges
 } = require("../../config/debug");
 
-/** initialization of db collections */
-async function initApps() {
-    const initData = {
-        firstname: "Jordan",
-        lastname: "Ho",
-        email: "jordanhho@gmail.com",
-        education_description: "I have a Bachelor of applied science degree from Simon Fraser. I major in computer science that specializes in software systems. I also have taken a BCIT course with Cisco IT admin training.",
-        experience_description: "I have worked on several school projects to create web applications about scheduling, monitoring elevators, and site report writer. I have also done 2 co-ops where one is a full stack developer position and the other is a front-end only position. Through the full-stack position, I have worked on an education management system with my school to help professors and students manage school resources. At the front-end position, I have made many advancements and improvements on their man application.",
-        specialization_description: "I find developing web applications really fun, especially when knowing the application is going to be useful for many people. I have fun optimizing and improving and existing applications while putting out my own ideas. I also really enjoy building a completely new application from the ground up while working with a serious team. Of course, constructing a completely new app is always tedious but these experiences are fun and valuable that I would like take my web development skills to the next level at my next job.",
-        hobby_description: "I have previously competed professionally in the first-person shooter called Crossfire. This game requires reflexes, knowledge, the ability to think fast on your feet, and most importantly teamwork and communication. Through fierce competition, I have built up my communication and teamwork skills to work with many different players that I have also found that are easily applied to both school group work and at my co-ops. I have also competed as a high level amateur in csgo on ESEA main level league team. These skills honed at the game have helped me build a good work ethic and the ability to communicate and work with others well. In the end, I really like playing first-person shooters that are highly competitive that requires a high level of teamwork.",
-        linkedin_url: "https://www.linkedin.com/in/jordanhho/",
-        github_url: "https://github.com/Jordanhho",
-        resume_url: "resume_link",
-        youtube_url: "https://www.youtube.com/channel/UC8MYJwWZQr6c6Ryjkt6vv4Q",
-        twitch_url: "https://www.twitch.tv/yuukicf",
-        steam_url: "https://steamcommunity.com/profiles/76561198022667905",
-        crossfire_profile_url: "https://www.crossfirestars.com/en/stats/player?playerNo=3298",
-        esea_url: "https://play.esea.net/users/2282189",
-    }
-    await insertAboutMe(initData);
+async function initAdminSettings() {
+    insertAdminSettings()
 }
 
 
-async function initAboutMe() {
+/** initialization of db collections */
+async function initApps() {
     await insertApp({
         app_id: "csgo_utility_app",
         app_name: "CSGO Utility App",
@@ -56,7 +40,47 @@ async function initAboutMe() {
         app_type: "android_app",
         is_wip: true
     });
+}
+
+async function initAboutMe() {
+    const initData = {
+        firstname: "Jordan",
+        lastname: "Ho",
+        email: "jordanhho@gmail.com",
+
+        education_description: "I have graduated from Simon Fraser University in 2020 with a Bachelor of Science degree. I major in Software Systems, a specialization of a computer science degree. I have also taken a course at Cisco Networking Academy for IT Essentials and CCNA.",
+
+        school_experience_description: "I have worked on several web applications for school projects. The applications were a VueJS scheduling application, a VueJS elevator monitoring application, and an Angular onsite work report writer application.Through working on these projects, I have developed my teamwork skills to be able to adapt to different group members.",
+
+        work_experience_description: "I have done 2 co-ops during my undergraduate studies.< br />My first co- op was at Simon Fraser University's School of Business where I worked with a team of 6 in agile as a Full-Stack Web Developer. During the co-op, I have worked on improving and extending their education management systems for professors, advisors, and students using PHP and JQuery. I have also helped them build from the ground up a new ReactJS application for future purposes. < br /> My second co - op was at Celayix where I worked with a team of 10 in agile as a Front - end Web Application Developer.Celayix is a software company that develops a scheduling application to make scheduling easy.During this co - op, my responsibilities were to fix bugs and implement new features for the app.I have also worked with QA and UX developers. ",
+
+        skill_specialization_description: "My main development languages include Javascript, Java, C, PHP, and Python. < br /> For software suites, I am familiar with using Jetbrain programs, Visual Studio, JIRA, Youtrack, and Confluence project management trackers. < br /> I am also familiar with using Google Cloud Platform, AWS, Docker, and Git. < br /> For operating systems, I am very familiar with using Ubuntu Linux, Mac, and Windows 10. <br/> My main javascript frameworks I use is ReactJS, JQuery, and NodeJS. <br /> For databases I am familar with using MySQL and MongoDB. ",
+
+        hobby_description: "My hobbies include playing video games with friends, and watching Japanese Anime. I'm also a very competitive person, so I enjoy competing at video games.",
+
+        esports_description: "I have previously competed professionally in the Tecent Sponsored First Person Shooter game called Crossfire. This game requires fast reflexes and thinking, but also requires strong communication and teamwork skills. It also requires a steady level of work ethics to train yourself to be at the top of the game. I have also competed at a high amateur level in Counter-Strike Global Offensive ESEA that helped me further develop my teamwork and communication skills to seamlessly work with my teammates. Through competing in esports with many teams, I have developed my teamwork and communication skills to a high level that were easily applied to my workplaces and school project work. ",
+
+        goal_description: "I am currently looking for a job that is in the web development industry. I am interested in Full-stack web development positions that use ReactJS. I am confident that I can apply the skills I have developed and gained from my co-ops, school projects, and esports teamwork experience at your company. My contact me at my email details below.  ",
+
+        linkedin_url: "https://www.linkedin.com/in/jordanhho/",
+        github_url: "https://github.com/Jordanhho",
+        resume_url: "resume_link",
+        youtube_url: "https://www.youtube.com/channel/UC8MYJwWZQr6c6Ryjkt6vv4Q",
+        twitch_url: "https://www.twitch.tv/yuukicf",
+        steam_url: "https://steamcommunity.com/profiles/76561198022667905",
+        crossfire_profile_url: "https://www.crossfirestars.com/en/stats/player?playerNo=3298",
+        esea_url: "https://play.esea.net/users/2282189",
+    }
+    await insertAboutMe(initData);
 };
+
+async function initAdminSettings() {
+    await insertAdminSettings({
+        enable_new_accounts: false,
+        enable_emailing: false,
+        enable_change_password: false
+    });
+}
 
 /** apps data manipulation */
 async function insertApp(data) {
@@ -151,7 +175,6 @@ async function insertAboutMe(data) {
 }
 
 async function updateAboutMe(data) {
-    console.log(data);
     try {
         const doc = await AboutMe.findOneAndUpdate(
             {},
@@ -170,9 +193,65 @@ async function updateAboutMe(data) {
     }
 }
 
+/** admin settings */
+
+async function insertAdminSettings(data) {
+    try {
+        const adminSettings = new AdminSettings(data);
+        const doc = await new Promise((resolve, reject) => {
+            adminSettings.save(function (err, doc) {
+                if (err) {
+                    dbDebugMsges(err);
+                    reject(null);
+                }
+                resolve(doc);
+            });
+        });
+        return doc.toObject();
+    } catch (err) {
+        dbDebugMsges(err);
+        return null;
+    }
+}
+
+async function updateAdminSettings(data) {
+    try {
+        const doc = await AdminSettings.findOneAndUpdate(
+            {},
+            data,
+            { new: true }
+        );
+        if (!doc) {
+            dbDebugMsges("No such admin settings found");
+            return null;
+        }
+        dbDebugMsges("Successfully updated admin settings", doc);
+        return doc.toObject();
+    } catch (err) {
+        dbDebugMsges(err);
+        return null;
+    }
+}
+
+async function getAdminSettings() {
+    try {
+        const doc = await AdminSettings.findOne();
+        if (!doc) {
+            dbDebugMsges("No such admin settings found");
+            return null;
+        }
+        dbDebugMsges("Successfully found admin settings", doc);
+        return doc.toObject();
+    } catch (err) {
+        dbDebugMsges(err);
+        return null;
+    }
+}
+
 module.exports = {
     initAboutMe,
     initApps,
+    initAdminSettings,
 
     insertApp,
     upsertAppDetails,
@@ -180,5 +259,9 @@ module.exports = {
     updateAppById,
 
     insertAboutMe,
-    updateAboutMe
+    updateAboutMe,
+    
+    insertAdminSettings,
+    updateAdminSettings,
+    getAdminSettings
 }

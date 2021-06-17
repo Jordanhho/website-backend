@@ -27,8 +27,6 @@ async function getApps() {
     }
 }
 
-
-
 async function getAboutMe() {
     try {
         const doc = await AboutMe.findOne();

@@ -19,11 +19,6 @@ const {
     SERVER_EMAIL_PROVIDER
 } = process.env;
 
-const oauth2Client = new OAuth2(
-    OAUTH_CLIENT_ID,
-    OAUTH_CLIENT_SECRET,
-    "https://developers.google.com/oauthplayground"
-);
 
 //gets the rendered html template from ejs for email
 async function getHTMLTemplate(vars, filePath) {
@@ -43,6 +38,12 @@ async function getHTMLTemplate(vars, filePath) {
 
 //send email
 async function sendEmail(data) {
+    const oauth2Client = new OAuth2(
+        OAUTH_CLIENT_ID,
+        OAUTH_CLIENT_SECRET,
+        "https://developers.google.com/oauthplayground"
+    );
+
     oauth2Client.setCredentials({
         refresh_token: OAUTH_REFRESH_TOKEN,
     });

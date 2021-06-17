@@ -17,6 +17,7 @@ const {
 } = require("../../controllers/db/public_db_controller");
 
 const {
+    getAdminSettings,
     updateAboutMe
 } = require("../../controllers/db/private_db_controller");
 
@@ -33,7 +34,37 @@ const {
     getPublicImage
 } = require("../../controllers/aws_cloudfront_controller");
 
-//** GET REQUESTS **//
+
+/** GET Requests */
+router.get(apiRoutes.LOGIN_SETTINGS, async function (req, res) {
+    let adminSettings = await getAdminSettings();
+
+    let data = {
+        enable_new_accounts: adminSettings.enable_new_accounts,
+        enable_emailing: adminSettings.enable_emailing,
+        enable_change_password: adminSettings.enable_change_password
+    }
+
+    if (!data) {
+        return handleRes(
+            req,
+            res,
+            200,
+            null,
+            "Something went wrong",
+        );
+    }
+
+    return handleRes(
+        req,
+        res,
+        200,
+        null,
+        "Sending Login Settings",
+        data
+    );
+});
+
 router.get(apiRoutes.HOME, async function (req, res) {
     const weatherResult = await getCityWeather("Vancouver");
     const weatherData = weatherResult.data;
@@ -96,7 +127,6 @@ router.get(apiRoutes.HOME, async function (req, res) {
         "Sending Home Data",
         homeData
     );
-
 });
 
 router.get(apiRoutes.ABOUT_ME, async function (req, res) {
@@ -141,10 +171,15 @@ router.get(apiRoutes.ABOUT_ME, async function (req, res) {
 
         //specifically set resume as resume url and same with profile picture, then remove their objects 
         //remove sensitive information from data
-        data['resume_url'] = data.resume.url;
-        data['profile_picture_url'] = data.profile_picture.url;
-        delete data.resume;
-        delete data.profile_picture;
+        if(data.resume) {
+            data['resume_url'] = data.resume.url;
+            delete data.resume;
+        }
+        if (data.profile_picture) {
+            data['profile_picture_url'] = data.profile_picture.url;
+            delete data.profile_picture;
+        }
+
         delete data._id;
         delete data.__v;
 
