@@ -115,6 +115,10 @@ router.get(apiRoutes.HOME, async function (req, res) {
             nodejs: {
                 url: "https://nodejs.org/en/",
                 logo: getPublicImage("nodejs_logo.png")
+            },
+            nginx: {
+                url: "https://www.nginx.com/",
+                logo: getPublicImage("nginx_logo.png")
             }
         }
     }
