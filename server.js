@@ -7,6 +7,7 @@ require('dotenv').config({
 
 //security
 const helmet = require("helmet");
+const NODE_ENV = process.env.NODE_ENV;
 
 const cors = require("cors");
 const bodyParser = require("body-parser");
