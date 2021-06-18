@@ -12,7 +12,7 @@ const port = process.env.REACT_PORT;
 app.use(express.static(path.join(__dirname, "build")));
 
 app.get("*", function (req, res) {
-    res.sendFile(path.join(__dirname, "../website-frontend/build", "index.html"));
+    res.sendFile(path.join(__dirname, "./website-frontend/build", "index.html"));
 });
 
 app.listen(port, () => {
