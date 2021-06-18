@@ -25,7 +25,7 @@ app.use(helmet());
 
 // enable CORS
 app.use(cors({
-    origin: "http://localhost:3000", // url of the frontend application
+    origin: "http://jordanho.ca:3000", // url of the frontend application //TODO fix to dev/prod after
     credentials: true // set credentials true for secure httpOnly cookie
 }));
 // use cookie parser for secure httpOnly cookie
