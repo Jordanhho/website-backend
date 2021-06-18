@@ -9,7 +9,7 @@ require('dotenv').config({
 
 const port = process.env.REACT_PORT;
 
-app.use(express.static(path.join(__dirname, "build")));
+app.use(express.static(path.join(__dirname, "./website-frontend/build")));
 
 app.get("*", function (req, res) {
     res.sendFile(path.join(__dirname, "./website-frontend/build", "index.html"));
