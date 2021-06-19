@@ -13,7 +13,6 @@ const {
 //returns true or false if recaptcha has been verified
 function verifyRecaptcha(req) {
     return new Promise((resolve, reject)=> {
-        console.log("verifying recaptcha")
         if (!req.body.recaptcha_token || !req.connection.remoteAddress) {
             recaptchaDebugMsgs("No Recaptcha Token found in req body.");
             resolve(false);

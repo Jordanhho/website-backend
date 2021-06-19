@@ -198,8 +198,8 @@ router.get(apiRoutes.ABOUT_ME, async function (req, res) {
         delete data._id;
         delete data.__v;
 
-        //obfuscate the email by reversing the string, then re-reversing on frontend.
-        data.email = reverseStr(data.email);
+        // //obfuscate the email by reversing the string, then re-reversing on frontend.
+        // data.email = reverseStr(data.email);
 
         return handleRes(
             req,
