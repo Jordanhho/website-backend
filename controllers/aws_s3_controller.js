@@ -3,6 +3,10 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const moment = require("moment");
 
+const {
+    awsS3DebugMsges
+} = require("../config/debug");
+
 const PRIVATE_BUCKET = process.env.PRIVATE_BUCKET;
 
 const s3Config = {
@@ -84,6 +88,7 @@ async function getRenewedS3UrlBucketFile(bucketObject) {
 
     //check if signed url has expired, otherwise just return the url
     if (moment().isAfter(bucketObject.expire_at)) {
+        awsS3DebugMsges("Refreshed S3 Bucket File: ", bucketObject.bucket_key)
         return await getS3UrlBucketFile(bucketObject.bucket_key);
     }
     return null;

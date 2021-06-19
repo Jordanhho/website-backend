@@ -6,11 +6,12 @@ const {
 } = require("../../config/debug");
 
 const { 
+    getDbObjToObj,
     getNormalObjectArray
 } = require("./db_utility");
 
 //gets all apps
-async function getApps() {
+async function getApps(safe = true) {
     try {
         const docs = await AppDetails.find();
         if (!docs) {
@@ -20,14 +21,14 @@ async function getApps() {
         dbDebugMsges("Retrived all apps details", docs);
 
         //convert all docs into normal objects.
-        return getNormalObjectArray(docs);
+        return getNormalObjectArray(docs, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function getAboutMe() {
+async function getAboutMe(safe = true) {
     try {
         const doc = await AboutMe.findOne();
         if (!doc) {
@@ -35,7 +36,7 @@ async function getAboutMe() {
             return null;
         }
         dbDebugMsges("Successfully found aboutMe data", doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;

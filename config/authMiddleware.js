@@ -29,7 +29,10 @@ const authMiddleware = async function (req, res, next) {
             req, 
             res, 
             401,
-            "no access token in req header authorization"
+            {
+                resMsg: "Unauthorized Access",
+                debugMsg: "No access token in req header authorization"
+            }   
         );
     }
    
@@ -42,7 +45,10 @@ const authMiddleware = async function (req, res, next) {
             req, 
             res, 
             403,
-            "No csrf token in req header"
+            {
+                resMsg: "Forbidden Access",
+                debugMsg: "No csrf token in req header"
+            }
         );
     }
 
@@ -57,7 +63,11 @@ const authMiddleware = async function (req, res, next) {
             req,
             res,
             401,
-            "Either: no csrf token in req header, no refresh token that is active, or invalid refresh token/csrf token"
+            {
+                resMsg: "Unauthorized Access",
+                debugMsg: "Either: no csrf token in req header, no refresh token that is active, or invalid refresh token/csrf token"
+            }
+            
         );
     }
 
@@ -83,8 +93,10 @@ const authMiddleware = async function (req, res, next) {
                     req,
                     res,
                     401,
-                    "Unauthorized",
-                    "User is not an ADMIN Level"
+                    {
+                        resMsg: "Unauthorized Access",
+                        debugMsg: "User is not at ADMIN Level"
+                    }                    
                 );
             }
             next();

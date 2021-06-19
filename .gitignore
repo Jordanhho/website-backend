@@ -1,9 +1,10 @@
 node_modules/*
-website-frontend/*
 config/.env
 controllers/csgo_controller.js
-trash/*
 aws/*
 db/models/csgo/*
 .vscode/*
 helper/coordinateGrid.js
+website-frontend/*
+website-frontend/
+other_apps/*

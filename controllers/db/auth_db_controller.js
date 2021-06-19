@@ -12,9 +12,13 @@ const {
     dbDebugMsges
 } = require("../../config/debug");
 
+const {
+    getDbObjToObj
+} = require("./db_utility");
+
 /** User Model **/
 
-async function getUserByEmail(email) {
+async function getUserByEmail(email, safe = true) {
     try {
         const doc = await UserModel.findOne({ email: email });
         if(!doc) {
@@ -22,14 +26,14 @@ async function getUserByEmail(email) {
             return null;
         }
         dbDebugMsges("Successfully found user by email", email, doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch(err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function getUserByUserId(userid) {
+async function getUserByUserId(userid, safe = true) {
     try {
         const doc = await UserModel.findOne({ userid: userid });
         if (!doc) {
@@ -37,14 +41,14 @@ async function getUserByUserId(userid) {
             return null;
         }
         dbDebugMsges("Successfully found user by userid", userid, doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function getUserByEmailAndPassword(email, password) {
+async function getUserByEmailAndPassword(email, password, safe = true) {
     try {
         const doc = await UserModel.findOne({ email: email });
         if (!doc) {
@@ -59,14 +63,14 @@ async function getUserByEmailAndPassword(email, password) {
             return null;
         }
         dbDebugMsges("Successfully found user with matching password", { email, password }, doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function insertUser(data) {
+async function insertUser(data, safe = true) {
     try {
         const user = new UserModel(data);
         const doc = await new Promise((resolve, reject) => {
@@ -83,14 +87,14 @@ async function insertUser(data) {
             return null;
         }
         dbDebugMsges("Successfully inserted a user", user, doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function updateUserByEmail(data) {
+async function updateUserByEmail(data, safe = true) {
     try {
         const doc = await UserModel.findOneAndUpdate(
             { email: data.email },
@@ -102,7 +106,7 @@ async function updateUserByEmail(data) {
             return null;
         }
         dbDebugMsges("Successfully updated user", data.email, doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -113,7 +117,7 @@ async function updateUserByEmail(data) {
 
 /** Temp New User Model **/
 
-async function getTempUserByEmail(email) {
+async function getTempUserByEmail(email, safe = true) {
     try {
         const doc = await TempUserModel.findOne({ email: email });
         if (!doc) {
@@ -121,14 +125,14 @@ async function getTempUserByEmail(email) {
             return null;
         }
         dbDebugMsges("Successfully found temp user", email, doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function getTempUserByActivationCodeAndEmail(email, activation_code) {
+async function getTempUserByActivationCodeAndEmail(email, activation_code, safe = true) {
     try {
         const doc = await TempUserModel.findOne({ email: email, activation_code: activation_code });
         if (!doc) {
@@ -136,14 +140,14 @@ async function getTempUserByActivationCodeAndEmail(email, activation_code) {
             return null;
         }
         dbDebugMsges("Successfully found temp user", email, doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function upsertTempUser(data) {
+async function upsertTempUser(data, safe = true) {
     try {
         const doc = await TempUserModel.findOneAndUpdate(
             { email: data.email },
@@ -155,14 +159,14 @@ async function upsertTempUser(data) {
             return null;
         }
         dbDebugMsges("Successfully upserted a temp user", data.email, doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function removeTempUserByEmail(email) {
+async function removeTempUserByEmail(email, safe = true) {
     try {
         await TempUserModel.deleteOne({ email: email });
         dbDebugMsges("Successfully removed the following temp user", email);
@@ -202,7 +206,7 @@ async function clearExpiredTempUsers() {
 
 /** Reset Pass User Model **/
 
-async function getResetPassUserByVerificationCodeAndEmail(email, verification_code) {
+async function getResetPassUserByVerificationCodeAndEmail(email, verification_code, safe = true) {
     try {
         const doc = await ResetPassUserModel.findOne({ email: email, verification_code: verification_code });
         if (!doc) {
@@ -210,7 +214,7 @@ async function getResetPassUserByVerificationCodeAndEmail(email, verification_co
             return null;
         }
         dbDebugMsges("Successfully found reset pass user", { email, verification_code }, doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -218,7 +222,7 @@ async function getResetPassUserByVerificationCodeAndEmail(email, verification_co
 }
 
 
-async function getResetPassUserByVerificationTokenAndEmail(email, verification_token) {
+async function getResetPassUserByVerificationTokenAndEmail(email, verification_token, safe = true) {
     try {
         const doc = await ResetPassUserModel.findOne({ email: email, verification_token: verification_token });
         if (!doc) {
@@ -226,7 +230,7 @@ async function getResetPassUserByVerificationTokenAndEmail(email, verification_t
             return null;
         }
         dbDebugMsges("Successfully found reset pass user", { email, verification_token }, doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -234,7 +238,7 @@ async function getResetPassUserByVerificationTokenAndEmail(email, verification_t
 }
 
 
-async function upsertResetPassUser(data) {
+async function upsertResetPassUser(data, safe = true) {
     try {
         const doc = await ResetPassUserModel.findOneAndUpdate(
             { email: data.email },
@@ -246,7 +250,7 @@ async function upsertResetPassUser(data) {
             return null;
         }
         dbDebugMsges("Successfully upserted a reset pass user", data.email, doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -254,7 +258,7 @@ async function upsertResetPassUser(data) {
 }
 
 
-async function updateResetPassUserByEmail(data) {
+async function updateResetPassUserByEmail(data, safe = true) {
     try {
         const doc = await ResetPassUserModel.findOneAndUpdate(
             { email: data.email },
@@ -266,14 +270,14 @@ async function updateResetPassUserByEmail(data) {
             return null;
         }
         dbDebugMsges("Successfully updated reset pass user", data, doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function removeResetPassUserByEmail(email) {
+async function removeResetPassUserByEmail(email, safe = true) {
     try {
         await ResetPassUserModel.deleteOne({ email: email });
         dbDebugMsges("Successfully removed the following reset pass user", email);

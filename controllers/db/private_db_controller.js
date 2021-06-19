@@ -6,8 +6,12 @@ const {
     dbDebugMsges
 } = require("../../config/debug");
 
+const {
+    getDbObjToObj
+} = require("./db_utility");
+
 /** apps data manipulation */
-async function insertApp(data) {
+async function insertApp(data, safe = true) {
     try {
         const app = new AppDetails(data);
         const doc = await new Promise((resolve, reject) => {
@@ -20,7 +24,7 @@ async function insertApp(data) {
             });
         });
         dbDebugMsges("Successfully inserted app data", doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -28,7 +32,7 @@ async function insertApp(data) {
 }
 
 //if id, update by id
-async function upsertAppDetails(data) {
+async function upsertAppDetails(data, safe = true) {
     try {
         const doc = await AppDetails.findOneAndUpdate(
             { app_id: data.app_id },
@@ -40,14 +44,14 @@ async function upsertAppDetails(data) {
             return null;
         }
         dbDebugMsges("Successfully upserted an app details", data.app_id, doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function updateAppById(data) {
+async function updateAppById(data, safe = true) {
     try {
         const doc = await AppDetails.findOneAndUpdate(
             { app_id: data.app_id },
@@ -59,14 +63,14 @@ async function updateAppById(data) {
             return null;
         }
         dbDebugMsges("Successfully updated app data", doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function removeAppDetailById(app_id) {
+async function removeAppDetailById(app_id, safe = true) {
     try {
         await AppDetails.deleteOne({ app_id: app_id });
         dbDebugMsges("Successfully removed the following app details", app_id);
@@ -79,7 +83,7 @@ async function removeAppDetailById(app_id) {
 
 /** about me data manipulation */
 
-async function insertAboutMe(data) {
+async function insertAboutMe(data, safe = true) {
     try {
         const aboutMe = new AboutMe(data);
         const doc = await new Promise((resolve, reject) => {
@@ -91,14 +95,14 @@ async function insertAboutMe(data) {
                 resolve(doc);
             });
         });
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function updateAboutMe(data) {
+async function updateAboutMe(data, safe = true) {
     try {
         const doc = await AboutMe.findOneAndUpdate(
             {},
@@ -110,7 +114,7 @@ async function updateAboutMe(data) {
             return null;
         }
         dbDebugMsges("Successfully updated aboutMe data", doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -119,7 +123,7 @@ async function updateAboutMe(data) {
 
 /** admin settings */
 
-async function insertAdminSettings(data) {
+async function insertAdminSettings(data, safe = true) {
     try {
         const adminSettings = new AdminSettings(data);
         const doc = await new Promise((resolve, reject) => {
@@ -131,14 +135,14 @@ async function insertAdminSettings(data) {
                 resolve(doc);
             });
         });
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function updateAdminSettings(data) {
+async function updateAdminSettings(data, safe = true) {
     try {
         const doc = await AdminSettings.findOneAndUpdate(
             {},
@@ -150,14 +154,14 @@ async function updateAdminSettings(data) {
             return null;
         }
         dbDebugMsges("Successfully updated admin settings", doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function getAdminSettings() {
+async function getAdminSettings(safe = true) {
     try {
         const doc = await AdminSettings.findOne();
         if (!doc) {
@@ -165,7 +169,7 @@ async function getAdminSettings() {
             return null;
         }
         dbDebugMsges("Successfully found admin settings", doc);
-        return doc.toObject();
+        return getDbObjToObj(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;

@@ -34,6 +34,10 @@ const {
     getPublicImage
 } = require("../../controllers/aws_cloudfront_controller");
 
+const { 
+    reverseStr
+} = require("../../utility/helper");
+
 
 /** GET Requests */
 router.get(apiRoutes.LOGIN_SETTINGS, async function (req, res) {
@@ -50,8 +54,10 @@ router.get(apiRoutes.LOGIN_SETTINGS, async function (req, res) {
             req,
             res,
             200,
-            null,
-            "Something went wrong",
+            {
+                error: true,
+                debugMsg: "Something went wrong",
+            }
         );
     }
 
@@ -59,9 +65,10 @@ router.get(apiRoutes.LOGIN_SETTINGS, async function (req, res) {
         req,
         res,
         200,
-        null,
-        "Sending Login Settings",
-        data
+        {
+            debugMsg: "Sending Login Settings",
+            data: data
+        }
     );
 });
 
@@ -127,9 +134,10 @@ router.get(apiRoutes.HOME, async function (req, res) {
         req,
         res,
         200,
-        null,
-        "Sending Home Data",
-        homeData
+        {
+            debugMsg: "Sending Home Data",
+            data: homeData
+        }
     );
 });
 
@@ -142,8 +150,11 @@ router.get(apiRoutes.ABOUT_ME, async function (req, res) {
             req,
             res,
             200,
-            null,
-            "Something went wrong",
+            {
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "No about me data was found",
+            }
         );
     }
 
@@ -187,13 +198,17 @@ router.get(apiRoutes.ABOUT_ME, async function (req, res) {
         delete data._id;
         delete data.__v;
 
+        //obfuscate the email by reversing the string, then re-reversing on frontend.
+        data.email = reverseStr(data.email);
+
         return handleRes(
             req,
             res,
             200,
-            null,
-            "Sending About Me Data",
-            data
+            {
+                debugMsg: "Sending About Me Data",
+                data: data
+            }
         );
     });
 });
@@ -208,8 +223,11 @@ router.get(apiRoutes.APPS, async function (req, res) {
             req,
             res,
             200,
-            null,
-            "Something went wrong",
+            {
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "No apps data was found",
+            }
         );
     }
 
@@ -223,9 +241,10 @@ router.get(apiRoutes.APPS, async function (req, res) {
         req,
         res,
         200,
-        null,
-        "Sending Apps Data",
-        data
+        {
+            debugMsg: "Sending Apps Data",
+            data: data
+        }
     );
 });
 

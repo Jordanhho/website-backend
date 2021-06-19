@@ -43,7 +43,11 @@ router.get(apiRoutes.GET_ADMIN_SETTINGS, authMiddleware, async (req, res) => {
             req,
             res,
             200,
-            "Something went wrong"
+            {
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "No admin settings data was found",
+            }
         );
     }
 
@@ -51,9 +55,10 @@ router.get(apiRoutes.GET_ADMIN_SETTINGS, authMiddleware, async (req, res) => {
         req,
         res,
         200,
-        null,
-        "Got Admin Home Data",
-        adminSettings
+        {
+            debugMsg: "Got Admin Home Data",
+            data: adminSettings
+        }
     );
 });
 
@@ -80,8 +85,10 @@ router.post(apiRoutes.UPDATE_ABOUT_ME, authMiddleware, upload.fields(
             req,
             res,
             200,
-            null,
-            "Missing Required Fields"
+            {
+                error: true,
+                debugMsg: "Missing Required Fields"
+            }
         );
     }
     let updateData = req.body;
@@ -97,9 +104,11 @@ router.post(apiRoutes.UPDATE_ABOUT_ME, authMiddleware, upload.fields(
                     req,
                     res,
                     200,
-                    null,
-                    "Missing Required Fields",
-                    "Invalid resume file format"
+                    {
+                        error:  true,
+                        resMsg: "Missing Required Fields",
+                        debugMsg: "Invalid resume file format"
+                    }
                 );
             }
 
@@ -111,8 +120,11 @@ router.post(apiRoutes.UPDATE_ABOUT_ME, authMiddleware, upload.fields(
                     req,
                     res,
                     200,
-                    null,
-                    "Failed to upload resume"
+                    {
+                        error: true,
+                        resMsg: "Something went wrong",
+                        debugMsg: "Failed to upload resume"
+                    }
                 );
             }
 
@@ -134,9 +146,11 @@ router.post(apiRoutes.UPDATE_ABOUT_ME, authMiddleware, upload.fields(
                     req,
                     res,
                     200,
-                    null,
-                    "Missing Required Fields",
-                    "Invalid profile picture file format"
+                    {
+                        error: true,
+                        resMsg: "Missing Required Fields",
+                        debugMsg: "Invalid profile picture file format"
+                    }
                 );
             }
 
@@ -148,8 +162,11 @@ router.post(apiRoutes.UPDATE_ABOUT_ME, authMiddleware, upload.fields(
                     req,
                     res,
                     200,
-                    null,
-                    "Failed to upload profile photo"
+                    {
+                        error: true,
+                        resMsg: "Something went wrong",
+                        debugMsg: "Failed to upload profile photo"
+                    }  
                 );
             }
 
@@ -160,27 +177,35 @@ router.post(apiRoutes.UPDATE_ABOUT_ME, authMiddleware, upload.fields(
     }
 
     //update data portion excluding files.
-    const updatedAboutMe = await updateAboutMe(updateData);
+    let updatedAboutMe = await updateAboutMe(updateData);
     if (!updatedAboutMe) {
         return handleRes(
             req,
             res,
             200,
-            null,
-            "Something went wrong with updating about me",
             {
-                update: true
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "Failed to upload profile photo"
             }
         );
     }
+    //specifically set resume as resume url and same with profile picture, then remove their objects 
+    //remove sensitive information from data
+    updatedAboutMe['resume_url'] = updatedAboutMe.resume.url;
+    delete updatedAboutMe.resume;
+    updatedAboutMe['profile_picture_url'] = updatedAboutMe.profile_picture.url;
+    delete updatedAboutMe.profile_picture;
 
     return handleRes(
         req, 
         res, 
         200,
-        null,
-        "Successfully updated about me data",
-        updatedAboutMe
+        {
+
+            debugMsg: "Successfully updated about me data",
+            data: updatedAboutMe
+        }
     );
 });
 
@@ -191,8 +216,12 @@ router.post(apiRoutes.UPDATE_APPS, authMiddleware, async (req, res) => {
             req,
             res,
             200,
-            null,
-            "Missing Required Fields"
+            200,
+            {
+                error: true,
+                resMsg: "Missing Required Fields",
+                debugMsg: "Missing Apps required data"
+            }
         );
     }
     const appList = req.body.apps;
@@ -210,10 +239,10 @@ router.post(apiRoutes.UPDATE_APPS, authMiddleware, async (req, res) => {
             req,
             res,
             200,
-            null,
-            "Something went wrong with updating apps",
             {
-                update: true
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "Something went wrong with updating apps",
             }
         );
     }
@@ -222,9 +251,10 @@ router.post(apiRoutes.UPDATE_APPS, authMiddleware, async (req, res) => {
         req,
         res,
         200,
-        null,
-        "Successfully updated apps data",
-        updatedApps
+        {
+            debugMsg: "Successfully updated apps data",
+            data: updatedApps
+        }
     );
 });
 
@@ -237,8 +267,11 @@ router.post(apiRoutes.REMOVE_APP, authMiddleware, async (req, res) => {
             req,
             res,
             200,
-            null,
-            "Missing Required Fields"
+            {
+                error: true,
+                resMsg: "Missing Required Fields",
+                debugMsg: "Missing app id required data"
+            }
         );
     }
     const app_id = req.body.app_id;
@@ -250,16 +283,21 @@ router.post(apiRoutes.REMOVE_APP, authMiddleware, async (req, res) => {
             req,
             res,
             200,
-            null,
-            "Something went wrong with removing app"
+            {
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "Something went wrong with removing app"
+            }
         );
     }
     return handleRes(
         req,
         res,
         200,
-        null,
-        "Successfully removed app"
+        {
+            resMsg: "Successfully removed app",
+            debugMsg: "Successfully removed app"
+        }
     );
 });
 
@@ -272,8 +310,11 @@ router.post(apiRoutes.UPDATE_ADMIN_SETTINGS, authMiddleware, async (req, res) =>
             req,
             res,
             200,
-            null,
-            "Missing Required Fields"
+            {
+                error: true,
+                resMsg: "Missing Required Fields",
+                debugMsg: "Missing admin settings from req body"
+            }
         );
     }
 
@@ -285,14 +326,12 @@ router.post(apiRoutes.UPDATE_ADMIN_SETTINGS, authMiddleware, async (req, res) =>
             req,
             res,
             200,
-            null,
-            "Something went wrong with updating admin home settings"
+            {
+                error: true,
+                debugMsg: "Something went wrong with updating admin home settings"
+            }
         );
     }
-
-    //delete _id and __v
-    delete updatedAdminSettings._id;
-    delete updatedAdminSettings.__v;
 
     //also update local admin settings
     updateLocalAdminSettings(updatedAdminSettings);
@@ -301,9 +340,10 @@ router.post(apiRoutes.UPDATE_ADMIN_SETTINGS, authMiddleware, async (req, res) =>
         req,
         res,
         200,
-        null,
-        "Successfully updated admin home settings",
-        updatedAdminSettings
+        {
+            debugMsg: "Successfully updated admin home settings",
+            data: updatedAdminSettings
+        }
     );
 });
 
