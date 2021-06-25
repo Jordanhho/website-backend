@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const EducationDetails = require("../sub_models/EducationDetails");
-const SchoolExperience = require("../sub_models/SchoolExperience");
-const WorkExperience = require("../sub_models/WorkExperience");
+const EducationDetails = require("../sub_models/educationDetails");
+const SchoolExperience = require("../sub_models/schoolExperience");
+const WorkExperience = require("../sub_models/workExperience");
 
 const ResumeDisplaySchema = new Schema(
     {
