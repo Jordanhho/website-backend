@@ -16,6 +16,6 @@ app.get("*", function (req, res) {
     res.sendFile(path.join(__dirname, "./website-frontend/build", "index.html"));
 });
 
-app.listen(port, () => {
+app.listen(REACT_PORT, () => {
     console.log(`Listening to ${REACT_PORT}`)
 });
