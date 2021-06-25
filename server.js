@@ -88,6 +88,15 @@ app.use(authRouter);
 app.use(privateRouter);
 
 
+//set content security policy exclusions for aws s3 
+app.use(function (req, res, next) {
+    res.setHeader(
+       'Content-Security-Policy',
+        "default-src 'self'; font-src 'self'; img-src 'self' https://private-personal-website-storage.s3.us-west-2.amazonaws.com; script-src 'self'; style-src 'self'; frame-src 'self'"
+    );
+    return next();
+});
+
 //attempt to connect to db
 let dbConnect = new Promise((resolve, reject) => {
     //establish database connection
