@@ -10,7 +10,6 @@ const {
     local_admin_settings
 } = require("../../config/admin_settings");
 
-
 //email
 const {
     sendEmail
@@ -22,7 +21,7 @@ const {
 
 //recaptcha verification
 const {
-    verifyRecaptcha
+    verifyInvisibleRecaptcha
 } = require("../../config/recaptcha_config");
 
 const {
@@ -72,12 +71,22 @@ const {
     getResetPasswordTokenExpiryTime
 } = require("../../config/verification_gen");
 
-//TODO remove later
 const RECAPTCHA_ENABLE = (process.env.RECAPTCHA_ENABLE === "true");
 const RESET_PASSWORD_VERIFICATION_CODE_EXPIRE = process.env.RESET_PASSWORD_VERIFICATION_CODE_EXPIRE;
 const EMAIL_VERIFICATION_CODE_EXPIRE = process.env.EMAIL_VERIFICATION_CODE_EXPIRE;
-const WEB_URL = process.env.WEB_URL;
-const REACT_PORT = process.env.REACT_PORT;
+const WEBSITE_URL_DEV = process.env.WEBSITE_URL_DEV;
+const WEBSITE_URL_PROD = process.env.WEBSITE_URL_PROD;
+const NODE_ENV = process.env.NODE_ENV;
+
+function getActivationLink(tempUserDbObj) {
+    //switch between https and http depending if production or development
+    if(NODE_ENV === "development") {
+        return `http://${WEBSITE_URL_DEV}/admin/login/activate_account/${tempUserDbObj.email}/${tempUserDbObj.activation_code}`;
+    }
+    else {
+        return `https://${WEBSITE_URL_PROD}/admin/login/activate_account/${tempUserDbObj.email}/${tempUserDbObj.activation_code}`;
+    }
+}
 
 //** POST REQUESTS **//
 
@@ -89,15 +98,40 @@ router.post(apiRoutes.LOGIN, async function (req, res) {
     apiDebugMsges(apiRoutes.LOGIN, req);
 
     //check if data is empty
-    if (!req.body.email || !req.body.password) {
+    if (!req.body.recaptcha_token 
+        || !req.body.email 
+        || !req.body.password
+    ) {
         return handleRes(
             req, 
             res, 
             200, 
-            null,
-            "Missing Required Fields"
+            {
+                error: true,
+                debugMsg: "Missing either email or password or recaptcha token"
+            }
         );
     }
+
+    //verify captcha
+    let verifiedCaptcha;
+    if (RECAPTCHA_ENABLE) {
+        verifiedCaptcha = await verifyInvisibleRecaptcha(req);
+        //check if not a bot
+        if (!verifiedCaptcha) {
+            return handleRes(
+                req,
+                res,
+                200,
+                {
+                    error: true,
+                    resMsg: "Something went wrong with login.",
+                    debugMsg: "Something went wrong with recaptcha verification"
+                }
+            );
+        }
+    }
+
     const loginObj = req.body;
 
     //make sure email is lowercase
@@ -110,16 +144,16 @@ router.post(apiRoutes.LOGIN, async function (req, res) {
             req, 
             res, 
             400, 
-            "Username and Password required."
+            {
+                error: true,
+                resMsg: "Username and Password required.",
+                debugMsg: "Missing either email or password"
+            }
         );
     }
 
     //Find user in db by password and email
     let userDbObj = await getUserByEmailAndPassword(email, password);
-
-    //remove _id and __v
-    delete userDbObj._id;
-    delete userDbObj.__v;
 
     //return 404 if no such user exists in db or password/email is incorrect
     if (!userDbObj) {
@@ -127,8 +161,11 @@ router.post(apiRoutes.LOGIN, async function (req, res) {
             req, 
             res, 
             401, 
-            "Invalid email or password.",
-            "No user was found or incorrect login details"
+            {
+                error: true,
+                resMsg: "Invalid email or password.",
+                debugMsg: "No user was found or incorrect login details"
+            }
         );
     }
     
@@ -138,8 +175,11 @@ router.post(apiRoutes.LOGIN, async function (req, res) {
             req,
             res,
             401,
-            "Unauthorized",
-            "User is not an ADMIN Level"
+            {
+                error: true,
+                resMsg: "Unauthorized Access",
+                debugMsg: "User is not at ADMIN Level"
+            }
         );
     }
 
@@ -173,12 +213,13 @@ router.post(apiRoutes.LOGIN, async function (req, res) {
             req, 
             res, 
             200, 
-            null,
-            "Successfully logged in user: " + email,
             {
-                user: userDbObj,
-                accessToken: accessTokenObj.accessToken,
-                expiredAt: accessTokenObj.expiredAt
+                debugMsg: "Successfully logged in user: " + email,
+                data: {
+                    user: userDbObj,
+                    accessToken: accessTokenObj.accessToken,
+                    expiredAt: accessTokenObj.expiredAt
+                }
             }
         );
     });
@@ -196,8 +237,10 @@ router.post(apiRoutes.VERIFY_LOGIN_SESSION, function (req, res) {
             req, 
             res, 
             204, 
-            null,
-            "Refresh token does not exist"
+            {
+                error: true,
+                debugMsg: "Refresh token does not exist",
+            } 
         );
     }
 
@@ -210,8 +253,10 @@ router.post(apiRoutes.VERIFY_LOGIN_SESSION, function (req, res) {
             req, 
             res, 
             401,
-            null,
-            "Either: no csrf token in req header, no refresh token that is active, or invalid refresh token/csrf token"
+            {
+                error: true,
+                debugMsg: "Either: no csrf token in req header, no refresh token that is active, or invalid refresh token/csrf token"
+            }
         );
     }
 
@@ -222,7 +267,10 @@ router.post(apiRoutes.VERIFY_LOGIN_SESSION, function (req, res) {
                 req, 
                 res, 
                 401,
-                err
+                {
+                    error: true,
+                    debugMsg: err
+                }
             );
         }
         const userDbObj = await getUserByUserId(payload.userid);
@@ -233,8 +281,10 @@ router.post(apiRoutes.VERIFY_LOGIN_SESSION, function (req, res) {
                 req, 
                 res, 
                 401,
-                null,
-                "Valid refresh token but no such user"
+                {
+                    error: true,
+                    debugMsg: "Valid refresh token but no such user",
+                }
             );
         }
         //generate access token
@@ -253,12 +303,13 @@ router.post(apiRoutes.VERIFY_LOGIN_SESSION, function (req, res) {
             req, 
             res, 
             200, 
-            null,
-            "Successfully verified active refresh token and user",
             {
-                user: userDbObj,
-                accessToken: accessTokenObj.accessToken,
-                expiredAt: accessTokenObj.expiredAt
+                debugMsg: "Successfully verified active refresh token and user",
+                data: {
+                    user: userDbObj,
+                    accessToken: accessTokenObj.accessToken,
+                    expiredAt: accessTokenObj.expiredAt
+                }
             }
         );
     });
@@ -273,8 +324,9 @@ router.post(apiRoutes.LOGOUT, (req, res) => {
         req,
         res, 
         204,
-        null,
-        "Successfully logged user out"
+        {
+            debugMsg: "Successfully logged user out"
+        }
     );
 });
 
@@ -282,7 +334,7 @@ router.post(apiRoutes.LOGOUT, (req, res) => {
 //** User Sign up Process */
 
 //user signup api
-router.post(apiRoutes.SIGNUP, function (req, res) {
+router.post(apiRoutes.SIGNUP, async function (req, res) {
     apiDebugMsges(apiRoutes.SIGNUP, req);
 
     //if sign up disabled, return unauthorized
@@ -291,13 +343,17 @@ router.post(apiRoutes.SIGNUP, function (req, res) {
             req,
             res,
             401,
-            "Unauthorized",
-            "Sign ups has been disabled"
+            {
+                error: true,
+                resMsg: "Unauthorized Access",
+                debugMsg: "Sign ups has been disabled"
+            }
         );
     }
 
     //check if data is empty
-    if (!req.body.email
+    if (!req.body.recaptcha_token
+        || !req.body.email
         || !req.body.password
         || !req.body.firstname
         || !req.body.lastname) {
@@ -305,9 +361,30 @@ router.post(apiRoutes.SIGNUP, function (req, res) {
             req, 
             res, 
             200, 
-            null,
-            "Missing Required Fields"
+            {
+                error: true,
+                debugMsg: "Missing Required Fields"
+            }
         );
+    }
+
+    //verify captcha
+    let verifiedCaptcha;
+    if (RECAPTCHA_ENABLE) {
+        verifiedCaptcha = await verifyInvisibleRecaptcha(req);
+        //check if not a bot
+        if (!verifiedCaptcha) {
+            return handleRes(
+                req,
+                res,
+                200,
+                {
+                    error: true,
+                    resMsg: "Something went wrong with sending reset password email",
+                    debugMsg: "Something went wrong with recaptcha verification"
+                }
+            );
+        }
     }
 
     const signUpObj = req.body;
@@ -336,8 +413,10 @@ router.post(apiRoutes.SIGNUP, function (req, res) {
                 req,
                 res,
                 200,
-                null,
-                "An account with that email already exists"
+                {
+                    error: true,
+                    debugMsg: "An account with that email already exists"
+                }
             );
         }
 
@@ -347,10 +426,11 @@ router.post(apiRoutes.SIGNUP, function (req, res) {
                 req,
                 res,
                 200,
-                null,
-                "An email has already been sent to activate your account",
                 {
-                    "activation_email_sent": true
+                    debugMsg: "An email has already been sent to activate your account",
+                    data: {
+                        "activation_email_sent": true
+                    }
                 }
             );
         }
@@ -389,8 +469,10 @@ router.post(apiRoutes.SIGNUP, function (req, res) {
                     req,
                     res,
                     200,
-                    null,
-                    "An error has occured when creating the temp account"
+                    {
+                        error: true,
+                        debugMsg: "An error has occured when creating the temp account"
+                    },
                 );
             }
 
@@ -400,7 +482,7 @@ router.post(apiRoutes.SIGNUP, function (req, res) {
                 vars: {
                     activation_code: upsertedTempUserDbObj.activation_code,
                     expire_in_hours: moment.duration(ms(EMAIL_VERIFICATION_CODE_EXPIRE)).asHours(),
-                    activation_link: `http://${WEB_URL}:${REACT_PORT}/admin/login/activate_account/${upsertedTempUserDbObj.email}/${upsertedTempUserDbObj.activation_code}`
+                    activation_link: getActivationLink(upsertedTempUserDbObj)
                 }
             }
             try {
@@ -412,10 +494,11 @@ router.post(apiRoutes.SIGNUP, function (req, res) {
                     req,
                     res,
                     200,
-                    null,
-                    "An email has been sent to your account for sign up activation",
                     {
-                        "activation_email_sent": true
+                        debugMsg: "An email has been sent to your account for sign up activation",
+                        data: {
+                            "activation_email_sent": true
+                        }
                     }
                 );
             } catch (err) {
@@ -423,8 +506,10 @@ router.post(apiRoutes.SIGNUP, function (req, res) {
                     req,
                     res,
                     200,
-                    null,
-                    "Something happened while attempting to send an email activation"
+                    {
+                        error: true,
+                        debugMsg: "Something happened while attempting to send an email activation"
+                    }
                 );
             }
         });
@@ -442,19 +527,43 @@ router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
             req,
             res,
             401,
-            "Unauthorized",
-            "Sign ups has been disabled"
+            {
+                error: true,
+                resMsg: "Unauthorized Access",
+                debugMsg: "Sign ups has been disabled"
+            }
         );
     }
 
-    if (!req.body.email || !req.body.activation_code) {
+    if (!req.body.recaptcha_token || !req.body.email || !req.body.activation_code) {
         return handleRes(
             req, 
             res, 
             200, 
-            null,
-            "Missing Required Fields"
+            {
+                error: true,
+                debugMsg: "Missing Required Fields"
+            }
         );
+    }
+
+    //verify captcha
+    let verifiedCaptcha;
+    if (RECAPTCHA_ENABLE) {
+        verifiedCaptcha = await verifyInvisibleRecaptcha(req);
+        //check if not a bot
+        if (!verifiedCaptcha) {
+            return handleRes(
+                req,
+                res,
+                200,
+                {
+                    error: true,
+                    resMsg: "Something went wrong with sending reset password email",
+                    debugMsg: "Something went wrong with recaptcha verification"
+                }
+            );
+        }
     }
     
     const email = req.body.email.toLowerCase().trim();
@@ -468,9 +577,11 @@ router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
             req,
             res,
             200,
-            null,
-            "Invalid activation code",
-            "No temp user entry was found from activation code and email"
+            {
+                error: true,
+                resMsg: "Invalid activation code",
+                debugMsg: "No temp user entry was found from activation code and email"
+            }
         );
     }
     
@@ -480,8 +591,11 @@ router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
             req,
             res,
             200,
-            "Invalid activation code",
-            "Temp user was found, but the activation code has expired"
+            {
+                error: true,
+                resMsg: "Invalid activation code",
+                debugMsg: "Temp user was found, but the activation code has expired"
+            }
         );
     }
 
@@ -492,8 +606,11 @@ router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
             req,
             res,
             200,
-            "Something went wrong with activating your account",
-            "Failed to delete temp user entry"
+            {
+                error: true,
+                resMsg: "Something went wrong with activating your account",
+                debugMsg: "Failed to delete temp user entry"
+            }
         );
     }
 
@@ -514,8 +631,11 @@ router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
             req,
             res,
             200,
-            "Something went wrong with activating your account",
-            "Failed to create a new user entry"
+            {
+                error: true,
+                resMsg: "Something went wrong with activating your account",
+                debugMsg: "Failed to create a new user entry"
+            }
         );
     }
 
@@ -523,10 +643,11 @@ router.post(apiRoutes.ACTIVATE_ACCOUNT, async function (req, res) {
         req, 
         res, 
         200, 
-        null,
-        "Successfully verified user email verification code",
         {
-            "activated_account": true
+            debugMsg: "Successfully verified user email verification code",
+            data: {
+                "activated_account": true
+            }
         }
     );
 });
@@ -546,8 +667,11 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
             req,
             res,
             401,
-            "Unauthorized",
-            "Changing passwords have been disabled or email has been disabled"
+            {
+                error: true,
+                resMsg: "Unauthorized Access",
+                debugMsg: "Changing passwords have been disabled or email has been disabled"
+            }
         );
     }
 
@@ -556,23 +680,28 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
             req,
             res,
             200,
-            null,
-            "Missing Required Fields"
+            {
+                error: true,
+                debugMsg: "Missing Required Fields"
+            }
         );
     }
 
     //verify captcha
     let verifiedCaptcha;
     if (RECAPTCHA_ENABLE) {
-        verifiedCaptcha = await verifyRecaptcha(req);
+        verifiedCaptcha = await verifyInvisibleRecaptcha(req);
         //check if not a bot
-        if (!req.verifiedCaptcha) {
+        if (!verifiedCaptcha) {
             return handleRes(
                 req, 
                 res, 
                 200, 
-                "Something went wrong with sending reset password email",
-                "Something went wrong with recaptcha verification"
+                {
+                    error: true,
+                    resMsg: "Something went wrong with sending reset password email",
+                    debugMsg: "Something went wrong with recaptcha verification"
+                }
             );
         }
     }
@@ -586,8 +715,10 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
             req, 
             res, 
             200, 
-            null,
-            "No such user with this email"
+            {
+                error: true,
+                debugMsg: "No such user with this email"
+            }
         );
     }
 
@@ -608,8 +739,10 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
             req,
             res,
             200,
-            null,
-            "An error has occured when creating the reset pass user entry"
+            {
+                error: true,
+                debugMsg: "An error has occured when creating the reset pass user entry"
+            }
         );
     }
 
@@ -629,10 +762,12 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
             req,
             res,
             200,
-            null,
-            "An email has been sent to your account for sign up verification",
             {
-                email_sent: true
+                debugMsg: "An email has been sent to your account for sign up verification",
+                data:
+                {
+                    email_sent: true
+                }
             }
         );
     } catch (err) {
@@ -640,8 +775,10 @@ router.post(apiRoutes.SEND_RESET_PASSWORD_EMAIL, async function (req, res) {
             req,
             res,
             200,
-            null,
-            "Something happened while attempting to send an email verification"
+            {
+                error: true,
+                debugMsg: "Something happened while attempting to send an email verification"
+            } 
         );
     }
 });
@@ -657,8 +794,11 @@ router.post(apiRoutes.VERIFY_RESET_PASSWORD_CODE, async function (req, res) {
             req,
             res,
             401,
-            "Unauthorized",
-            "Changing passwords have been disabled or email has been disabled"
+            {
+                error: true,
+                resMsg: "Authorized Access",
+                debugMsg: "Changing passwords have been disabled or email has been disabled"
+            }
         );
     }
 
@@ -667,8 +807,10 @@ router.post(apiRoutes.VERIFY_RESET_PASSWORD_CODE, async function (req, res) {
             req, 
             res, 
             200, 
-            null, 
-            "Missing Required Fields"
+            {
+                error: true,
+                debugMsg: "Missing Required Fields"
+            }
         );
     }
 
@@ -683,9 +825,11 @@ router.post(apiRoutes.VERIFY_RESET_PASSWORD_CODE, async function (req, res) {
             req,
             res,
             200,
-            null,
-            "Invalid verification code",
-            "No reset pass user entry was found from verification code and email"
+            {
+                error: true,
+                resMsg: "Invalid verification code",
+                debugMsg: "No reset pass user entry was found from verification code and email"
+            }
         );
     }
 
@@ -695,8 +839,11 @@ router.post(apiRoutes.VERIFY_RESET_PASSWORD_CODE, async function (req, res) {
             req,
             res,
             200,
-            "Invalid verification code",
-            "Reset pass user was found, but the verification code has expired"
+            {
+                error: true,
+                resMsg: "Invalid verification code",
+                debugMsg: "Reset pass user was found, but the verification code has expired"
+            }
         );
     }
 
@@ -716,8 +863,10 @@ router.post(apiRoutes.VERIFY_RESET_PASSWORD_CODE, async function (req, res) {
             req,
             res,
             200,
-            null,
-            "An error has occured when updating the reset pass user with verification token"
+            {
+                error: true,
+                debugMsg: "An error has occured when updating the reset pass user with verification token"
+            } 
         );
     }
 
@@ -725,11 +874,14 @@ router.post(apiRoutes.VERIFY_RESET_PASSWORD_CODE, async function (req, res) {
         req, 
         res, 
         200, 
-        "Successfully verified reset password verification code",
-        "Successfully verified verification code",
-        {
-            verified_code: true,
-            verification_token: updatedResetPassUserDbObj.verification_token
+        {   
+            resMsg: "Successfully verified reset password verification code",
+            debugMsg: "Successfully verified reset password verification code",
+            data:
+            {
+                verified_code: true,
+                verification_token: updatedResetPassUserDbObj.verification_token
+            }
         }
     );
 });
@@ -744,8 +896,11 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             req,
             res,
             401,
-            "Unauthorized",
-            "Changing Passwords Has been disabled"
+            {
+                error: true,
+                resMsg: "Authorized Access",
+                debugMsg: "Changing Passwords Has been disabled"
+            }
         );
     }
 
@@ -757,8 +912,10 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             req,
             res,
             200,
-            null,
-            "Missing Required Fields"
+            {
+                error: true,
+                debugMsg: "Missing Required Fields"
+            }
         );
     }
 
@@ -774,9 +931,11 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             req,
             res,
             200,
-            null,
-            "Invalid verification token",
-            "No reset pass user entry was found from verification token and email"
+            {
+                error: true,
+                resMsg: "Invalid verification token",
+                debugMsg: "No reset pass user entry was found from verification token and email"
+            }  
         );
     }
 
@@ -786,8 +945,11 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             req,
             res,
             200,
-            "Invalid verification token",
-            "Reset pass user was found, but the verification token has expired"
+            {
+                error: true,
+                resMsg: "Invalid verification token",
+                debugMsg: "Reset pass user was found, but the verification token has expired"
+            }
         );
     }
 
@@ -808,8 +970,11 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             req, 
             res, 
             200, 
-            "Something went wrong with changing pasword", 
-            "Failed to update user with new password"
+            {
+                error: true,
+                resMsg: "Something went wrong with changing pasword",
+                debugMsg: "Failed to update user with new password"
+            }
         );
     }
 
@@ -820,8 +985,11 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             req,
             res,
             200,
-            "Something went wrong with changing pasword",
-            "Failed to delete reset pass user entry"
+            {
+                error: true,
+                resMsg: "Something went wrong with changing pasword",
+                debugMsg: "Failed to delete reset pass user entry"
+            } 
         );
     }
 
@@ -839,10 +1007,11 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             req,
             res,
             200,
-            null,
-            "An email has been sent to your account to notify password change",
             {
-                password_changed: true
+                debugMsg: "An email has been sent to your account to notify password change",
+                data: {
+                    password_changed: true
+                }
             }
         );
     } catch (err) {
@@ -850,8 +1019,10 @@ router.post(apiRoutes.RESET_PASSWORD, async function (req, res) {
             req,
             res,
             200,
-            null,
-            "Something happened while attempting to send an email to notify password change"
+            {
+                error: true,
+                debugMsg: "Something happened while attempting to send an email to notify password change"
+            }
         );
     }
 });

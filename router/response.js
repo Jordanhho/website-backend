@@ -8,58 +8,48 @@ const {
 
 
 // handle the API response
-function handleRes(req, res, statusCode, resMsg, debugMsg = null, data = false) {
-    let isError = false;
-
-    let errorMsg = resMsg;
-    
-    if(!resMsg) {
-        errorMsg = null;
-    }
+function handleRes(req, res, statusCode, resObj) {
+    let error = resObj.error || false;
+    let resMsg = resObj.resMsg || null;
+    let debugMsg = resObj.debugMsg || null;
+    let data = resObj.data || {}
 
     switch (statusCode) {
         // No content
         case 204:
-            return res.sendStatus(204);
+            error = true;
         //Bad request
         case 400:
-            isError = true;
+            error = true;
             break;
         // Unauthorized
         case 401:
-            isError = true;
-            errorMsg = resMsg || 'Invalid user.';
+            error = true;
             clearTokens(req, res);
             break;
         // Forbidden
         case 403:
-            isError = true;
-            errorMsg = resMsg || 'Access to this resource is denied.';
+            error = true;
             clearTokens(req, res);
             break;
         // Conflict
         case 409:
-            isError = true;
-            errorMsg = resMsg || 'Conflicting Data';
+            error = true;
             clearTokens(req, res);
             break;
         default:
             break;
     }
 
-    const resObj = data || {};
+    const returnObj = {
+        error: error,
+        msg: resMsg,
+        data: data || {}
+    };
 
     //use debugMsg if it exists otherwise use resMsg
-    resDebugMsges(((debugMsg) ? debugMsg: resMsg), resObj);
-
-    if (isError) {
-        resObj.error = true;
-
-        if (errorMsg) {
-            resObj.msg = errorMsg;
-        }
-    }
-    return res.status(statusCode).json(resObj);
+    resDebugMsges(debugMsg || resMsg, returnObj);
+    return res.status(statusCode).json(returnObj);
 }
 
 module.exports = {

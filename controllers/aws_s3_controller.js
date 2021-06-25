@@ -3,6 +3,10 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const moment = require("moment");
 
+const {
+    awsS3DebugMsges
+} = require("../config/debug");
+
 const PRIVATE_BUCKET = process.env.PRIVATE_BUCKET;
 
 const s3Config = {
@@ -60,18 +64,20 @@ async function getS3SignedUrl(key, expires = DEFAULT_S3_URL_EXPIRE_SECONDS) {
 
 //returns the signed url object with expire_at time and the url
 //returns null if failure
-async function getS3UrlBucketFile(bucket_key) {
+async function getS3UrlBucketFile(bucketObject) {
     //get signed url to store in db with its expiry
     const expire_at = moment().add(DEFAULT_S3_URL_EXPIRE_SECONDS, 'seconds').toISOString();
-    const s3_url = await getS3SignedUrl(bucket_key);
+    const s3_url = await getS3SignedUrl(bucketObject.bucket_key);
 
     if(!s3_url) {
         return null;
     }
     return {
-        bucket_key: bucket_key,
+        bucket_key: bucketObject.bucket_key,
         expire_at: expire_at,
-        url: s3_url
+        bucket_file_signed_url: s3_url,
+        file_id: bucketObject.file_id,
+        is_private: bucketObject.is_private
     }
 }
 
@@ -84,7 +90,8 @@ async function getRenewedS3UrlBucketFile(bucketObject) {
 
     //check if signed url has expired, otherwise just return the url
     if (moment().isAfter(bucketObject.expire_at)) {
-        return await getS3UrlBucketFile(bucketObject.bucket_key);
+        awsS3DebugMsges("Refreshed S3 Bucket File: ", bucketObject)
+        return await getS3UrlBucketFile(bucketObject);
     }
     return null;
 }

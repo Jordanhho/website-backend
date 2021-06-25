@@ -11,12 +11,12 @@ function apiDebugMsges(route, req) {
         console.log("\n");
         console.log("API: " + route);
         printTimeStamp();
-        // if(req.body) {
-        //     console.log("Body: ", req.body);
-        // }
-        // if(req.file) {
-        //     console.log("File: ", req.file);
-        // }
+        if(req.body) {
+            console.log("Body: ", req.body);
+        }
+        if(req.file) {
+            console.log("File: ", req.file);
+        }
     }
 }
 
@@ -26,9 +26,9 @@ function apiDebugAuthMiddleware(req) {
         console.log("====== Auth Middleware ======");
         console.log("API: " + req.route.path);
         printTimeStamp();
-        // if (req.body) {
-        //     console.log("Body: ", req.body);
-        // }
+        if (req.body) {
+            console.log("Body: ", req.body);
+        }
     }
 }
 
@@ -36,7 +36,7 @@ function resDebugMsges(msg, resObj) {
     if (NODE_ENV === "development") {
         console.log("\n");
         console.log("RES:", msg);
-        // console.log("sending ", resObj);
+        console.log("sending ", resObj);
     }
 }
 
@@ -53,7 +53,7 @@ function dbDebugMsges(msg, query = null, doc = null) {
     }
 }
 
-async function passwordCheckDebugMsges(attemptPassword, isSamePassword) {
+function passwordCheckDebugMsges(attemptPassword, isSamePassword) {
     if (NODE_ENV === "development") {
         console.log("\n");
         console.log("Checking password for: ", attemptPassword);
@@ -64,11 +64,37 @@ async function passwordCheckDebugMsges(attemptPassword, isSamePassword) {
 function sendEmailDebugMsges(msg, emailObj) {
     if (NODE_ENV === "development") {
         console.log("\n");
-        console.log(msg);
+        console.log("EMAIL: ", msg);
         printTimeStamp();
         if(emailObj) {
             console.log(emailObj);
         }
+    }
+}
+
+function awsS3DebugMsges(msg, data) {
+    if (NODE_ENV === "development") {
+        console.log("\n");
+        console.log("AWS S3: ", msg, data);
+        printTimeStamp();
+    }
+}
+
+function recaptchaDebugMsgs(msg, data) {
+    if (NODE_ENV === "development") {
+        console.log("\n");
+        console.log("RECAPTCHA: ", msg);
+        if(data) {
+            console.log(data);
+        }
+        printTimeStamp();
+    }
+}
+
+function weatherApiDebugMsges(msg) {
+    if (NODE_ENV === "development") {
+        console.log("\n");
+        console.log("WEATHERAPI: ", msg);
     }
 }
 
@@ -79,4 +105,7 @@ module.exports = {
     dbDebugMsges,
     passwordCheckDebugMsges,
     sendEmailDebugMsges,
+    awsS3DebugMsges,
+    recaptchaDebugMsgs,
+    weatherApiDebugMsges
 }

@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-//table for storing aws bucket key, link and expiry of link
 const AppDetailsSchema = new Schema({
     app_id: {
         type: String,
@@ -25,6 +24,9 @@ const AppDetailsSchema = new Schema({
         type: String
     },
     is_wip: {
+        type: Boolean
+    },
+    is_github_private: {
         type: Boolean
     }
 });
