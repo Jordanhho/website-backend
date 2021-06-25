@@ -12,7 +12,7 @@ const SESSION_SECRET = process.env.SESSION_SECRET;
 
 //security
 const helmet = require("helmet");
-const session = require('express-session');
+// const session = require('express-session');
 
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -41,18 +41,21 @@ const origin = (NODE_ENV === "development"
     : `https://${WEBSITE_URL_PROD}:${REACT_PORT}`
 );
 
-app.use(
-    session({
-        secret: SESSION_SECRET,
-        resave: true,
-        saveUninitialized: false,
-        cookie: {
-            sameSite: NODE_ENV === "production" ? 'none' : 'lax', // must be 'none' to enable cross-site delivery
-            secure: NODE_ENV === "production", // must be true if sameSite='none'
-        }
-    })
-);
+// app.use(
+//     session({
+//         secret: SESSION_SECRET,
+//         resave: true,
+//         saveUninitialized: false,
+//         cookie: {
+//             sameSite: NODE_ENV === "production" ? 'none' : 'lax', // must be 'none' to enable cross-site delivery
+//             secure: NODE_ENV === "production", // must be true if sameSite='none'
+//         }
+//     })
+// );
 
+//session memory
+//-momery unleaked---------
+// app.set('trust proxy', 1);
 
 // enable CORS
 app.use(cors({
@@ -83,6 +86,7 @@ app.use(publicRouter);
 app.use(authRouter);
 
 app.use(privateRouter);
+
 
 //attempt to connect to db
 let dbConnect = new Promise((resolve, reject) => {
