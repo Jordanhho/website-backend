@@ -92,7 +92,7 @@ app.use(privateRouter);
 app.use(function (req, res, next) {
     res.setHeader(
        'Content-Security-Policy',
-        "default-src 'self'; font-src 'self'; img-src 'self' https://private-personal-website-storage.s3.us-west-2.amazonaws.com; script-src 'self'; style-src 'self' https://fonts.googleapis.com; frame-src 'self'"
+        "default-src 'self' https://fonts.googleapis.com/; font-src 'self'; img-src 'self' https://private-personal-website-storage.s3.us-west-2.amazonaws.com; script-src 'self'; style-src 'self'; frame-src 'self'"
     );
     return next();
 });
