@@ -1,8 +1,8 @@
 const AboutMe = require("../../db/models/public/aboutMe");
 const AppDetails = require("../../db/models/public/appDetails");
 const AdminSettings = require("../../db/models/settings/adminSettings");
-const ResumeDisplay = require("../../db/models/public/ResumeDisplay");
-const JordanHo = require("../../db/models/public/JordanHo");
+const ResumeDisplay = require("../../db/models/public/resumeDisplay");
+const JordanHo = require("../../db/models/public/jordanHo");
 const BucketFiles = require("../../db/models/private/bucketFiles");
 
 const {
