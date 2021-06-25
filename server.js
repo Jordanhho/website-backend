@@ -93,8 +93,8 @@ app.use(helmet.contentSecurityPolicy({
     directives: {
         defaultSrc: ["'self'"],
         // scriptSrc: ["'self'", 'code.jquery.com', 'maxcdn.bootstrapcdn.com'],
-        styleSrc: ["'self'", 'https://fonts.googleapis.com/icon?family=Material+Icons'],
-        // fontSrc: ["'self'", 'maxcdn.bootstrapcdn.com']
+        styleSrc: ["'self'", 'https://fonts.googleapis.com/'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com/']
     }
 }));
 
