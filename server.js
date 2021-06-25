@@ -84,38 +84,44 @@ app.use(authRouter);
 
 app.use(privateRouter);
 
-//start server to listen to port
-let backendServer = app.listen(EXPRESS_PORT, () => {
-    console.log(`ExpressJS Backend Server Started at Port: ${EXPRESS_PORT}`);
-});
+//attempt to connect to db
+let dbConnect = new Promise((resolve, reject) => {
+    //establish database connection
+    connectToDb().then(dbUrl => {
+        console.error('Database connected to:', dbUrl);
+        resolve(true)
+    }).catch((err) => {
+        console.error('Database Connection Error:', err);
 
-//if production
-let frontendServer = null;
-if(NODE_ENV === "production") {
-    //front end server static build files
-    app.use(express.static(path.join(__dirname, "./website-frontend/build")));
+        //close express js server as cannot connect to db
+        process.exit(1)
+    });
+})
 
-    app.get("*", function (req, res) {
-        res.sendFile(path.join(__dirname, "./website-frontend/build", "index.html"));
+dbConnect.then(() => {
+    //start server to listen to port
+    let backendServer = new Promise(async (resolve) => {
+        await app.listen(EXPRESS_PORT, () => {
+            console.log(`ExpressJS Backend Server Started at Port: ${EXPRESS_PORT}`);
+            resolve(true)
+        });
     });
 
-    frontendServer = app.listen(REACT_PORT, () => {
-        console.log(`ExpressJS Frontend Server Started at Port: ${REACT_PORT}`);
-    });
-}
+    //run frontend server if on production
+    backendServer.then(() => {
+        //if production
+        let frontendServer = null;
+        if (NODE_ENV === "production") {
+            //front end server static build files
+            app.use(express.static(path.join(__dirname, "./website-frontend/build")));
 
-//establish database connection
-connectToDb().then(dbUrl => {
-    console.error('Database connected to:', dbUrl);
-}, err => {
-    console.error('Database Connection error:', err);
+            app.get("*", function (req, res) {
+                res.sendFile(path.join(__dirname, "./website-frontend/build", "index.html"));
+            });
 
-    //close app if database not connected.
-    console.log("Closing ExpressJS Server.")
-    backendServer.close();
-
-    if (NODE_ENV === "production") {
-        frontendServer.close();
-    }
-    process.exit(1)
-});
+            frontendServer = app.listen(REACT_PORT, () => {
+                console.log(`ExpressJS Frontend Server Started at Port: ${REACT_PORT}`);
+            });
+        }
+    })
+})

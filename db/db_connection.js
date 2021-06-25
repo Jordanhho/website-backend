@@ -30,7 +30,19 @@ const dbConnection = mongoose.connection;
 
 function connectToDb() {
     return new Promise((resolve, reject) => {
+        console.log("Attemping to connect to database.")
+
+        //time out of 20 seconds if db isnt connected by then.
+        dbTimeout = setTimeout(function () {
+            dbConnection.close()
+            console.log("Closed database.")
+            reject("Database cannot be be reached. Check your network settings.")
+        }, 10000);
+
         dbConnection.once('open', async _ => {
+            //successfully connected, clear the timeout
+            clearTimeout(dbTimeout);
+
             //On startup server remove expired items
             if (DB_CLEAR_EXPIRED_ITEMS === "true") {
                 clearExpiredTempUsers();
@@ -41,12 +53,14 @@ function connectToDb() {
             await initLocalAdminSettings();
             resolve(dbUrl);
         });
+
+        //error on db connection
         dbConnection.on('error', err => {
             reject(err);
         });
-    }).catch((err) => {
-        return err;
-    });
+        
+   
+    })
 }
 
 module.exports = {

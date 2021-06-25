@@ -14,12 +14,23 @@ const {
 const {
     getApps,
     getAboutMe,
+    getResumeDisplay
 } = require("../../controllers/db/public_db_controller");
 
 const {
     getAdminSettings,
-    updateAboutMe
+    updateAboutMe,
+    getJordanHo,
+    getBucketFileByFileId,
+    updateBucketFile
 } = require("../../controllers/db/private_db_controller");
+
+const {
+    initJordanHo,
+    initResumeDisplay,
+    initApps,
+    initAboutMe
+} = require("../../controllers/db/init_db_controller");
 
 const {
     getRenewedS3UrlBucketFile
@@ -34,13 +45,10 @@ const {
     getPublicImage
 } = require("../../controllers/aws_cloudfront_controller");
 
-const { 
-    reverseStr
-} = require("../../utility/helper");
-
 
 /** GET Requests */
 router.get(apiRoutes.LOGIN_SETTINGS, async function (req, res) {
+    apiDebugMsges(apiRoutes.LOGIN_SETTINGS, req);
     let adminSettings = await getAdminSettings();
 
     let data = {
@@ -73,19 +81,256 @@ router.get(apiRoutes.LOGIN_SETTINGS, async function (req, res) {
 });
 
 router.get(apiRoutes.HOME, async function (req, res) {
-    const weatherResult = await getCityWeather("Vancouver");
-    const weatherData = weatherResult.data;
+    apiDebugMsges(apiRoutes.HOME, req);
+    // const weatherResult = await getCityWeather("Vancouver");
+    // const weatherData = weatherResult.data;
 
-    const homeData = {
-        city: weatherData.name,
-        country: weatherData.sys.country,
-        temperature_degrees: Math.trunc(weatherData.main.temp), //Only whole celcius degrees
-        weather_description: weatherData.weather[0].description,
-        icon_url: getWeatherIcon(weatherData.weather[0].icon),
-        website_github: {
-            backend_url: "https://github.com/Jordanhho/website-backend",
-            frontend_url: "https://github.com/Jordanhho/website-frontend"
-        },
+    // const homeData = {
+    //     city: weatherData.name,
+    //     country: weatherData.sys.country,
+    //     temperature_degrees: Math.trunc(weatherData.main.temp), //Only whole celcius degrees
+    //     weather_description: weatherData.weather[0].description,
+    //     icon_url: getWeatherIcon(weatherData.weather[0].icon),
+    // }
+
+    return handleRes(
+        req,
+        res,
+        200,
+        {
+            debugMsg: "Sending Home Data",
+            data: {}
+        }
+    );
+});
+
+router.get(apiRoutes.ABOUT_ME, async function (req, res) {
+    apiDebugMsges(apiRoutes.ABOUT_ME, req);
+
+    const jordanHoData = await getJordanHo();
+    if (!jordanHoData) {
+        return handleRes(
+            req,
+            res,
+            200,
+            {
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "No jordan ho data was found",
+            }
+        );
+    }
+
+    let aboutMeData = await getAboutMe();
+    if (!aboutMeData) {
+        return handleRes(
+            req,
+            res,
+            200,
+            {
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "No about me data was found",
+            }
+        );
+    }
+
+    //get profile picture file from file_id
+    let profilePicture = await getBucketFileByFileId(aboutMeData.profile_picture_file_id);
+    if (!profilePicture) {
+        return handleRes(
+            req,
+            res,
+            200,
+            {
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "No profile picture bucket file was found",
+            }
+        );
+    }
+    //check if need to renew resume file signed url
+    let renewedObj = await getRenewedS3UrlBucketFile(profilePicture);
+    if (renewedObj) {
+        profilePicture = await updateBucketFile(renewedObj);
+    }
+    const data = aboutMeData;
+    data['profile_picture_url'] = profilePicture.bucket_file_signed_url;
+    data['firstname'] = jordanHoData.firstname;
+    data['lastname'] = jordanHoData.lastname;
+
+    return handleRes(
+        req,
+        res,
+        200,
+        {
+            debugMsg: "Sending About Me Data",
+            data: data
+        }
+    );
+});
+
+router.get(apiRoutes.APPS, async function (req, res) {
+    apiDebugMsges(apiRoutes.APPS, req);
+
+    const appsData = await getApps();
+    if (!appsData) {
+        return handleRes(
+            req,
+            res,
+            200,
+            {
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "No apps data was found",
+            }
+        );
+    }
+
+    const jordanHoData = await getJordanHo();
+    if (!jordanHoData) {
+        return handleRes(
+            req,
+            res,
+            200,
+            {
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "No jordan ho data was found",
+            }
+        );
+    }
+
+    const data = {
+        apps: appsData,
+        github_url: jordanHoData.github_url
+    };
+    return handleRes(
+        req,
+        res,
+        200,
+        {
+            debugMsg: "Sending Apps Data",
+            data: data
+        }
+    );
+});
+
+router.get(apiRoutes.RESUME_DISPLAY, async function (req, res) {
+    apiDebugMsges(apiRoutes.RESUME_DISPLAY, req);
+
+    let resumeDisplay = await getResumeDisplay();
+
+    if (!resumeDisplay) {
+        return handleRes(
+            req,
+            res,
+            200,
+            {
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "No resume display data was found",
+            }
+        );
+    }
+
+    //get resume file from file_id
+    let resume = await getBucketFileByFileId(resumeDisplay.resume_file_id);
+    if (!resume) {
+        return handleRes(
+            req,
+            res,
+            200,
+            {
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "No resume bucket file was found",
+            }
+        );
+    }
+    //check if need to renew resume file signed url
+    let renewedObj = await getRenewedS3UrlBucketFile(resume);
+    if (renewedObj) {
+        resume = await updateBucketFile(renewedObj);
+    }
+    const data = resumeDisplay;
+    data['resume_url'] = resume.bucket_file_signed_url;
+
+    //remove resume file id
+    delete data.resume_file_id;
+
+    return handleRes(
+        req,
+        res,
+        200,
+        {
+            debugMsg: "Sending Resume Display Data",
+            data: data
+        }
+    );
+});
+
+
+router.get(apiRoutes.CONTACT_ME, async function (req, res) {
+    apiDebugMsges(apiRoutes.CONTACT_ME, req);
+    const jordanHoData = await getJordanHo();
+
+    if (!jordanHoData) {
+        return handleRes(
+            req,
+            res,
+            200,
+            {
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "No contact me data was found",
+            }
+        );
+    }
+    const data = {
+        email: jordanHoData.email,
+        crossfire_profile_url: jordanHoData.email,
+        youtube_url: jordanHoData.youtube_url,
+        linkedin_url: jordanHoData.linkedin_url,
+        github_url: jordanHoData.github_url,
+        twitch_url: jordanHoData.twitch_url,
+        steam_url: jordanHoData.steam_url,
+        esea_url: jordanHoData.esea_url,
+    }
+    return handleRes(
+        req,
+        res,
+        200,
+        {
+            debugMsg: "Sending Contact Me Data",
+            data: data
+        }
+    );
+});
+
+
+
+router.get(apiRoutes.ABOUT_WEBSITE, async function (req, res) {
+    apiDebugMsges(apiRoutes.ABOUT_WEBSITE, req);
+
+    const jordanHoData = await getJordanHo();
+
+    if (!jordanHoData) {
+        return handleRes(
+            req,
+            res,
+            200,
+            {
+                error: true,
+                resMsg: "Something went wrong",
+                debugMsg: "No contact me data was found",
+            }
+        );
+    }
+
+    const data = {
+        website_backend_github_url: jordanHoData.website_backend_github_url,
+        website_frontend_github_url: jordanHoData.website_frontend_github_url,
         technologies: {
             reactjs: {
                 url: "https://reactjs.org/",
@@ -135,118 +380,29 @@ router.get(apiRoutes.HOME, async function (req, res) {
         res,
         200,
         {
-            debugMsg: "Sending Home Data",
-            data: homeData
-        }
-    );
-});
-
-router.get(apiRoutes.ABOUT_ME, async function (req, res) {
-    apiDebugMsges(apiRoutes.ABOUT_ME, req);
-    let data = await getAboutMe();
-
-    if(!data) {
-        return handleRes(
-            req,
-            res,
-            200,
-            {
-                error: true,
-                resMsg: "Something went wrong",
-                debugMsg: "No about me data was found",
-            }
-        );
-    }
-
-    //check if resume or profile picture url has expired, if so renew it and save it into the db.
-    Promise.all([
-        getRenewedS3UrlBucketFile(data.resume),
-        getRenewedS3UrlBucketFile(data.profile_picture)
-    ]).then(async (dataList) => {
-        const renewedResume = dataList[0];
-        const renewedProfilePicture = dataList[1];
-
-        let updateData = data;
-        let updateFlag = false;
-
-        //if fields are not null, then that means they expired, update with new url.
-        if(renewedResume) {
-            updateFlag = true;
-            updateData.resume = renewedResume;
-        }
-        if(renewedProfilePicture) {
-            updateFlag = true;
-            updateData.profile_picture = renewedProfilePicture;
-        }
-        if(updateFlag) {
-            const updatedData = await updateAboutMe(updateData);
-            //set updatedData as just data to return
-            data = updatedData;
-        }
-
-        //specifically set resume as resume url and same with profile picture, then remove their objects 
-        //remove sensitive information from data
-        if(data.resume) {
-            data['resume_url'] = data.resume.url;
-            delete data.resume;
-        }
-        if (data.profile_picture) {
-            data['profile_picture_url'] = data.profile_picture.url;
-            delete data.profile_picture;
-        }
-
-        delete data._id;
-        delete data.__v;
-
-        // //obfuscate the email by reversing the string, then re-reversing on frontend.
-        // data.email = reverseStr(data.email);
-
-        return handleRes(
-            req,
-            res,
-            200,
-            {
-                debugMsg: "Sending About Me Data",
-                data: data
-            }
-        );
-    });
-});
-
-router.get(apiRoutes.APPS, async function (req, res) {
-    apiDebugMsges(apiRoutes.APPS, req);
-
-    let data = await getApps();
-
-    if (!data) {
-        return handleRes(
-            req,
-            res,
-            200,
-            {
-                error: true,
-                resMsg: "Something went wrong",
-                debugMsg: "No apps data was found",
-            }
-        );
-    }
-
-    //remove sensitive information
-    for(let i = 0; i < data.length; i++) {
-        delete data[i]._id;
-        delete data[i].__v;
-    }
-
-    return handleRes(
-        req,
-        res,
-        200,
-        {
-            debugMsg: "Sending Apps Data",
+            debugMsg: "Sending About Website Data",
             data: data
         }
     );
 });
+
+
+
+// router.get("/api/test", async function (req, res) {
+
+//     //await initResumeDisplay();
+//     //await initApps();
+//     await initAboutMe();
+
+//     return handleRes(
+//         req,
+//         res,
+//         200,
+//         {
+//             debugMsg: "Init test data"
+//         }
+//     );
+// });
 
 module.exports = router;
 

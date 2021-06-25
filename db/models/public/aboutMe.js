@@ -4,34 +4,10 @@ const Schema = mongoose.Schema;
 const BucketFile = require("../aws/bucketFile");
 
 const AboutMeSchema = new Schema({
-    firstname: {
-        type: String,
-        required: true
-    },
-    lastname: {
-        type: String,
-        required: true
-    },
-    profile_picture: {
-        type: BucketFile
-    },
-    email: {
-        type: String,
-        required: true
-    },
-    education_description: {
+    profile_picture_file_id: {
         type: String
     },
-    school_experience_description: {
-        type: String
-    },
-    work_experience_description: {
-        type: String
-    },
-    skill_specialization_description: {
-        type: String
-    },
-    hobby_description: {
+    personality_and_passion: {
         type: String
     },
     esports_description: {
@@ -40,36 +16,11 @@ const AboutMeSchema = new Schema({
     goal_description: {
         type: String
     },
-    crossfire_profile_url: {
-        type: String,
-        required: true
+    details_about_self: {
+        type: [String]
     },
-    youtube_url: {
-        type: String,
-        required: true
-    },
-    linkedin_url: {
-        type: String, 
-        required: true
-    },
-    github_url: {
-        type: String, 
-        required: true
-    },
-    twitch_url: {
-        type: String,
-        required: true
-    },
-    steam_url: {
-        type: String,
-        required: true
-    },
-    esea_url: {
-        type: String,
-        required: true
-    },
-    resume: {
-        type: BucketFile
+    interested_in: {
+        type: [String]
     },
 }, 
 { 

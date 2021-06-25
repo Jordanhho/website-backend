@@ -1,40 +1,34 @@
 //converts db Object to a javascript object
-function getDbObjToObj(doc, safe = true) {
-    let newObj = doc.toObject();
+function getNormalObjFromDoc(doc, safe = true) {
+    let normalObj = doc;
+    //removing sensitive information such as "_id" and "__v"
     if(safe) {
-        return getSafeDbObj(newObj);
+        normalObj = removeFieldsFromObj(normalObj, ["_id", "__v"]);
     }
-    else {
-        return newObj;
-    }
+    return normalObj;
 }
 
-//get normal objects array from db object array
-function getNormalObjectArray(arr, safe = true) {
-    let newList = [];
-
-    arr.forEach((element) => {
-        if(safe) {
-            newList.push(getSafeDbObj(element.toObject()));
-        }
+//given an object, delete all provided fields that matches the key.
+function removeFieldsFromObj(obj, fieldsToRemove) {
+    for (let currKey in obj) {
+        //skip _id as its a mongoose object
+        //if object and not array
+        if (typeof obj[currKey] == "object" && currKey !== "_id" ) {
+            delete obj.currKey;
+            let newJsonData = removeFieldsFromObj(obj[currKey], fieldsToRemove);
+            obj[currKey] = newJsonData;
+        } 
         else {
-            newList.push(element.toObject());
+            for (let key of fieldsToRemove) {
+                if (currKey === key) {
+                    delete obj[currKey];
+                }
+            }
         }
-    });
-
-    return newList;
-}
-
-//removes sensitive information such as _id and __v from database object.
-function getSafeDbObj(doc) {
-    let newDbObj = { ...doc};
-    delete newDbObj._id;
-    delete newDbObj.__v;
-    return newDbObj;
+    }
+    return obj;
 }
 
 module.exports = {
-    getDbObjToObj,
-    getNormalObjectArray,
-    getSafeDbObj
+    getNormalObjFromDoc
 }
