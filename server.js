@@ -32,9 +32,6 @@ const EXPRESS_PORT = process.env.EXPRESS_PORT;
 const REACT_PORT = process.env.REACT_PORT;
 const app = express();
 
-//for security
-app.use(helmet());
-
 //to set CORS between production and development for the reactjs served
 const origin = (NODE_ENV === "development"
     ? `http://${WEBSITE_URL_DEV}:${REACT_PORT}`
@@ -88,14 +85,27 @@ app.use(authRouter);
 app.use(privateRouter);
 
 
+//for security
+app.use(helmet());
+
+//setup content securtiy policy inclusions for aws s3, google api
+app.use(helmet.contentSecurityPolicy({
+    directives: {
+        defaultSrc: ["'self'"],
+        // scriptSrc: ["'self'", 'code.jquery.com', 'maxcdn.bootstrapcdn.com'],
+        styleSrc: ["'self'", 'https://fonts.googleapis.com/icon?family=Material+Icons'],
+        // fontSrc: ["'self'", 'maxcdn.bootstrapcdn.com']
+    }
+}));
+
 //set content security policy exclusions for aws s3 
-app.use(function (req, res, next) {
-    res.setHeader(
-       'Content-Security-Policy',
-        "default-src 'self' https://fonts.googleapis.com/; font-src 'self'; img-src 'self' https://private-personal-website-storage.s3.us-west-2.amazonaws.com; script-src 'self'; style-src 'self'; frame-src 'self'"
-    );
-    return next();
-});
+// app.use(function (req, res, next) {
+//     res.setHeader(
+//        'Content-Security-Policy',
+//         "default-src 'self'; font-src 'self'; img-src 'self' https://private-personal-website-storage.s3.us-west-2.amazonaws.com; script-src 'self'; style-src 'self' https://fonts.googleapis.com/; frame-src 'self'"
+//     );
+//     return next();
+// });
 
 //attempt to connect to db
 let dbConnect = new Promise((resolve, reject) => {
