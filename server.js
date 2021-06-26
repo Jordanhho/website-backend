@@ -93,16 +93,19 @@ app.use(privateRouter);
 // }));
 
 //setup content securtiy policy inclusions for aws s3, google api
-app.use(helmet.contentSecurityPolicy({
-    useDefaults: true,
-    directives: {
-        // defaultSrc: ["'self'"],
+app.use(
+    helmet.contentSecurityPolicy({
+        useDefaults: true,
+        directives: {
+            imgSrc: ["'self'", "https://private-personal-website-storage.s3.us-west-2.amazonaws.com"]
+        }
+    }
+));
+
+       // defaultSrc: ["'self'"],
         // scriptSrc: ["'self'", 'code.jquery.com', 'maxcdn.bootstrapcdn.com'],
         // styleSrc: ["'self'", 'https://fonts.googleapis.com/'],
         // fontSrc: ["'self'", 'https://fonts.gstatic.com/'],
-        imgSrc: ["'self'", 'https://private-personal-website-storage.s3.us-west-2.amazonaws.com']
-    }
-}));
 
 //set content security policy exclusions for aws s3 
 // app.use(function (req, res, next) {
