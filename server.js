@@ -107,7 +107,7 @@ app.use(
         contentSecurityPolicy: {
             directives: {
                 ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-                "img-src": ["'self'", "s3.amazonaws.com"],
+                "img-src": ["'self'", "https://private-personal-website-storage.s3.us-west-2.amazonaws.com/"],
             },
         },
     })
