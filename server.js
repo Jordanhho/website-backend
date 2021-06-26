@@ -56,7 +56,13 @@ let sess = {
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     cookie: {},
     store: MongoStore.create({
-        mongoUrl: mongoDbUrl
+        mongoUrl: mongoDbUrl,
+        ttl: 14 * 24 * 60 * 60, // = 14 days. Default
+        autoRemove: 'native', // Default
+        autoRemoveInterval: 10,
+        crypto: {
+            secret: SESSION_SECRET
+        }
     })
 }
 if (app.get('env') === 'production') {
