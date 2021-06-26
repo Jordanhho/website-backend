@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const express = require('express');
-const app = express();
 
 const DB_CLEAR_EXPIRED_ITEMS = process.env.DB_CLEAR_EXPIRED_ITEMS;
 
@@ -24,8 +23,8 @@ const DB_PASSWORD = process.env.DB_PASSWORD;
 const DB_NAME = process.env.DB_NAME;
 
 //database connection
-const dbUrl = 'mongodb+srv://' + DB_USERNAME + ':' + DB_PASSWORD + '@cluster0.6hlv5.mongodb.net/' + DB_NAME + '?retryWrites=true&w=majority';
-mongoose.connect(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true });
+const mongoDbUrl = 'mongodb+srv://' + DB_USERNAME + ':' + DB_PASSWORD + '@cluster0.6hlv5.mongodb.net/' + DB_NAME + '?retryWrites=true&w=majority';
+mongoose.connect(mongoDbUrl, { useNewUrlParser: true, useUnifiedTopology: true });
 const dbConnection = mongoose.connection;
 
 function connectToDb() {
@@ -51,19 +50,18 @@ function connectToDb() {
 
             //on startup setup admin settings
             await initLocalAdminSettings();
-            resolve(dbUrl);
+            resolve(mongoDbUrl);
         });
 
         //error on db connection
         dbConnection.on('error', err => {
             reject(err);
         });
-        
-   
     })
 }
 
 module.exports = {
+    mongoDbUrl,
     dbConnection,
     connectToDb
 };

@@ -15,6 +15,7 @@ const SESSION_SECRET = process.env.SESSION_SECRET;
 //security
 const helmet = require("helmet");
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const { nanoid } = require("nanoid");
 
 const cors = require("cors");
@@ -26,6 +27,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 
 //db
 const {
+    mongoDbUrl,
     dbConnection,
     connectToDb
  } = require("./db/db_connection");
@@ -52,7 +54,10 @@ let sess = {
     secret: SESSION_SECRET,
     // Cookie Options
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    cookie: {}
+    cookie: {},
+    store: MongoStore.create({
+        mongoUrl: mongoDbUrl
+    })
 }
 if (app.get('env') === 'production') {
     app.set('trust proxy', 1) // trust first proxy
