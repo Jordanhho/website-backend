@@ -211,8 +211,8 @@ async function initApps() {
         app_id: "csgo_utility_app",
         app_name: "CSGO Utility App",
         app_description: "A web application to allow competitive CSGO players to save a library of utility and share them privately with their team",
-        github_url: "github_url",
-        app_url: "https://github.com/Jordanhho/csgo-utility-app",
+        github_url: "https://github.com/Jordanhho/csgo-utility-app",
+        app_url: "",
         app_type: "web_app",
         is_wip: true,
         is_github_private: false
@@ -221,8 +221,8 @@ async function initApps() {
         app_id: "overlay_translate_app",
         app_name: "Overlay Translate App",
         app_description: "An overlay windows application to translate anything on your computer screen on the fly.",
-        github_url: "github_url",
-        app_url: "https://github.com/Jordanhho/overlay-translate-app",
+        github_url: "https://github.com/Jordanhho/overlay-translate-app",
+        app_url: "",
         app_type: "windows_app",
         is_wip: true,
         is_github_private: false
