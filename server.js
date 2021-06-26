@@ -91,7 +91,7 @@ app.use(helmet());
 //setup content securtiy policy inclusions for aws s3, google api
 app.use(helmet.contentSecurityPolicy({
     directives: {
-        // defaultSrc: ["'self'"],
+        defaultSrc: ["'self'"],
         // scriptSrc: ["'self'", 'code.jquery.com', 'maxcdn.bootstrapcdn.com'],
         // styleSrc: ["'self'", 'https://fonts.googleapis.com/'],
         // fontSrc: ["'self'", 'https://fonts.gstatic.com/'],
