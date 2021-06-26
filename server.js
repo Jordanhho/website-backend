@@ -50,11 +50,16 @@ let sess = {
     resave: true,
     saveUninitialized: false,
     secret: SESSION_SECRET,
+    // Cookie Options
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
     cookie: {}
 }
 if (app.get('env') === 'production') {
     app.set('trust proxy', 1) // trust first proxy
-    sess.cookie.secure = true // serve secure cookies
+    sess.cookie['secure'] = true // serve secure cookies
+
+    //set domain 
+    sess.cookie['domain'] = "jordanho.ca";
 }
 else {
     sess.cookie.secure = false // serve insecure cookies for dev
