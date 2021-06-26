@@ -12,7 +12,6 @@ const SESSION_SECRET = process.env.SESSION_SECRET;
 
 //security
 const helmet = require("helmet");
-// const session = require('express-session');
 
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -37,22 +36,6 @@ const origin = (NODE_ENV === "development"
     ? `http://${WEBSITE_URL_DEV}:${REACT_PORT}`
     : `https://${WEBSITE_URL_PROD}:${REACT_PORT}`
 );
-
-// app.use(
-//     session({
-//         secret: SESSION_SECRET,
-//         resave: true,
-//         saveUninitialized: false,
-//         cookie: {
-//             sameSite: NODE_ENV === "production" ? 'none' : 'lax', // must be 'none' to enable cross-site delivery
-//             secure: NODE_ENV === "production", // must be true if sameSite='none'
-//         }
-//     })
-// );
-
-//session memory
-//-momery unleaked---------
-// app.set('trust proxy', 1);
 
 // enable CORS
 app.use(cors({
@@ -81,27 +64,9 @@ app.use(publicRouter);
 
 //routes for csrf and jwt tokens
 app.use(authRouter);
-
 app.use(privateRouter);
 
-
-//for security
-// app.use(helmet({
-//     contentSecurityPolicy: {
-        
-//     }
-// }));
-
 //setup content securtiy policy inclusions for aws s3, google api
-// app.use(
-//     helmet.contentSecurityPolicy({
-//         useDefaults: true,
-//         directives: {
-//             imgSrc: ["'self'", "https://private-personal-website-storage.s3.us-west-2.amazonaws.com"]
-//         }
-//     }
-// ));
-
 app.use(
     helmet({
         contentSecurityPolicy: {
@@ -114,20 +79,6 @@ app.use(
         },
     })
 );
-
-       // defaultSrc: ["'self'"],
-        // scriptSrc: ["'self'", 'code.jquery.com', 'maxcdn.bootstrapcdn.com'],
-        // styleSrc: ["'self'", 'https://fonts.googleapis.com/'],
-        // fontSrc: ["'self'", 'https://fonts.gstatic.com/'],
-
-//set content security policy exclusions for aws s3 
-// app.use(function (req, res, next) {
-//     res.setHeader(
-//        'Content-Security-Policy',
-//         "default-src 'self'; font-src 'self' https://fonts.gstatic.com/; img-src 'self' https://private-personal-website-storage.s3.us-west-2.amazonaws.com; script-src 'self'; style-src 'self' https://fonts.googleapis.com/; frame-src 'self'"
-//     );
-//     return next();
-// });
 
 //attempt to connect to db
 let dbConnect = new Promise((resolve, reject) => {
