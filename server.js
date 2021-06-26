@@ -5,6 +5,8 @@ require('dotenv').config({
     path: path.resolve('./config/.env'),
 });
 
+const rateLimit = require("express-rate-limit");
+
 const NODE_ENV = process.env.NODE_ENV;
 const WEBSITE_URL_DEV = process.env.WEBSITE_URL_DEV;
 const WEBSITE_URL_PROD = process.env.WEBSITE_URL_PROD;
@@ -12,6 +14,8 @@ const SESSION_SECRET = process.env.SESSION_SECRET;
 
 //security
 const helmet = require("helmet");
+const session = require('express-session');
+const { nanoid } = require("nanoid");
 
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -36,6 +40,35 @@ const origin = (NODE_ENV === "development"
     ? `http://${WEBSITE_URL_DEV}:${REACT_PORT}`
     : `https://${WEBSITE_URL_PROD}:${REACT_PORT}`
 );
+
+
+//set expressjs to use sessions
+let sess = {
+    genid: function (req) {
+        return nanoid() // use nanoid for session IDs
+    },
+    resave: true,
+    saveUninitialized: false,
+    secret: SESSION_SECRET,
+    cookie: {}
+}
+if (app.get('env') === 'production') {
+    app.set('trust proxy', 1) // trust first proxy
+    sess.cookie.secure = true // serve secure cookies
+}
+else {
+    sess.cookie.secure = false // serve insecure cookies for dev
+}
+app.use(session(sess))
+
+//set rate limiting to prevent api spam
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100 // limit each IP to 100 requests per windowMs
+});
+
+//apply to all requests
+app.use(limiter);
 
 // enable CORS
 app.use(cors({
