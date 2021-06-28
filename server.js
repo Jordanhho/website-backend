@@ -249,6 +249,8 @@ dbConnect.then(() => {
 
                 ] // url of the frontend application and csgo app
             }));
+            app.use(cors());
+            subDomainExpress.use(cors());
             
             subDomainExpress.use(vhost("csgo-app.jordanho.ca", require("./csgo_app_server"))).listen(CSGO_APP_PORT, () => {
                 console.log(`CSGO App Frontend Server Started at Port: ${CSGO_APP_PORT}`);
