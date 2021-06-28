@@ -202,9 +202,28 @@ dbConnect.then(() => {
 
 
             let subdomainExpress = express();
+            subdomainExpress.use(function (req, res, next) {
+
+                // Website you wish to allow to connect
+                res.setHeader('Access-Control-Allow-Origin', '*');
+
+                // Request methods you wish to allow
+                res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+
+                // Request headers you wish to allow
+                res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+
+                // Set to true if you need the website to include cookies in the requests sent
+                // to the API (e.g. in case you use sessions)
+                res.setHeader('Access-Control-Allow-Credentials', true);
+
+                // Pass to next layer of middleware
+                next();
+            });
+
             subdomainExpress.use(subdomain('csgo-app.jordanho.ca', csgoRouter));
 
-            subdomainExpress.setHeader('Access-Control-Allow-Origin', '*');
+            
             subdomainExpress.listen(CSGO_APP_PORT, () => {
                 console.log(`ExpressJS Frontend Server Started at Port: ${CSGO_APP_PORT}`);
             });
