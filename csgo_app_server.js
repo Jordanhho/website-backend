@@ -30,10 +30,17 @@ const {
     mongoDbUrl,
 } = require("./db/db_connection");
 
+const REACT_PORT = process.env.REACT_PORT;
 const express = require("express");
 const CSGO_APP_PORT = process.env.CSGO_APP_PORT;
 const app = express();
 const csgoApp = express();
+
+const personal_website_origin = (NODE_ENV === "development"
+    ? `http://${WEBSITE_URL_DEV}:${REACT_PORT}`
+    : `https://${WEBSITE_URL_PROD}:${REACT_PORT}`
+);
+
 
 const csgo_app_origin = (NODE_ENV === "development"
     ? `http://${WEBSITE_URL_DEV}:${CSGO_APP_PORT}`
@@ -87,7 +94,9 @@ app.use(limiter);
 app.use(cors({
     credentials: true, // set credentials true for secure httpOnly cookie
     origin: [
-        csgo_app_origin
+        csgo_app_origin,
+        personal_website_origin
+
     ] // url of the frontend application and csgo app
 }));
 

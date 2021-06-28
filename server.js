@@ -240,6 +240,15 @@ dbConnect.then(() => {
                     },
                 })
             );
+
+            subDomainExpress.use(cors({
+                credentials: true, // set credentials true for secure httpOnly cookie
+                origin: [
+                    csgo_app_origin,
+                    personal_website_origin
+
+                ] // url of the frontend application and csgo app
+            }));
             
             subDomainExpress.use(vhost("csgo-app.jordanho.ca", require("./csgo_app_server"))).listen(CSGO_APP_PORT, () => {
                 console.log(`CSGO App Frontend Server Started at Port: ${CSGO_APP_PORT}`);
