@@ -48,7 +48,7 @@ const personal_website_origin = (NODE_ENV === "development"
 
 const csgo_app_origin = (NODE_ENV === "development"
     ? `http://${WEBSITE_URL_DEV}:${CSGO_APP_PORT}`
-    : `https://${WEBSITE_URL_PROD}:${CSGO_APP_PORT}`
+    : `https://${WEBSITE_CSGO_APP_URL_PROD}:${CSGO_APP_PORT}`
 );
 
 
