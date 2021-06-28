@@ -125,19 +125,6 @@ const authRouter = require("./router/auth/auth_router");
 const privateRouter = require("./router/private/private_router");
 const csgoAppPublicRouter = require("./router/csgo/csgo_app_public_router");
 
-//csgo app
-app.use(csgoAppPublicRouter);
-
-//public
-app.use(publicRouter);
-
-//routes for csrf and jwt tokens
-app.use(authRouter);
-app.use(privateRouter);
-
-//for apps
-app.use(privateRouter);
-
 //setup content securtiy policy inclusions for aws s3, google api
 app.use(
     helmet({
@@ -153,29 +140,6 @@ app.use(
         },
     })
 );
-// csgoApp.use(
-//     helmet({
-//         contentSecurityPolicy: {
-//             directives: {
-//                 ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-//                 "img-src": ["'self'", "https://private-personal-website-storage.s3.us-west-2.amazonaws.com/", "https://dkbz0bts1nczj.cloudfront.net/"],
-//                 "script-src": ["'self'", "https://www.google.com/recaptcha/", "https://www.gstatic.com/recaptcha/", "https://csgo-app.jordanho.ca/", "https://jordanho.ca/"],
-//                 "frame-src": ["'self'", "https://www.google.com/"],
-//                 "default-src": ["'self'", "https://csgo-app.jordanho.ca/", "https://jordanho.ca/"],
-//                 "connect-src": ["'self'", "https://csgo-app.jordanho.ca/", "https://jordanho.ca/"],
-//             },
-//         },
-//     })
-// );
-
-
-
-//for testing
-// app.use(
-//     helmet({
-//         contentSecurityPolicy: false,
-//     })
-// );
 
 //attempt to connect to db
 let dbConnect = new Promise((resolve, reject) => {
@@ -190,7 +154,7 @@ let dbConnect = new Promise((resolve, reject) => {
         process.exit(1)
     });
 })
-
+var subdomain = require('express-subdomain');
 dbConnect.then(() => {
     //start server to listen to port
     let backendServer = new Promise(async (resolve) => {
@@ -201,79 +165,63 @@ dbConnect.then(() => {
     });
 
     //run frontend server if on production
-    backendServer.then(() => {
+    backendServer.then(() => { 
         //if production
         let frontendServer = null;
         let csgowebapp = null;
-        if (true) {
+        if (NODE_ENV === "production") {
 
             // //Personal website
             //front end server static build files
             app.use(express.static(path.join(__dirname, "./website-frontend/build")));
-
             app.get("*", function (req, res) {
                 res.sendFile(path.join(__dirname, "./website-frontend/build", "index.html"));
             });
-
-            frontendServer = app.listen(REACT_PORT, () => {
+            app.listen(REACT_PORT, () => {
                 console.log(`ExpressJS Frontend Server Started at Port: ${REACT_PORT}`);
             });
 
-            // csgoApp.use(express.static(path.join(__dirname, "./other_apps/csgo-utility-app/build")));
-            // csgoApp.get("*", function (req, res) {
-            //     res.sendFile(path.join(__dirname, "./other_apps/csgo-utility-app/build", "index.html"));
-            // });
-            //const csgoApp = require("./csgo_app_server");
-            const subDomainExpress = express();
+            // let subDomainExpress= express();
+            // subDomainExpress.use(express.static(path.join(__dirname, "./other_apps/csgo-utility-app/build")));
 
-            subDomainExpress.use(
-                helmet({
-                    contentSecurityPolicy: {
-                        directives: {
-                            ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-                            "img-src": ["'self'", "https://private-personal-website-storage.s3.us-west-2.amazonaws.com/", "https://dkbz0bts1nczj.cloudfront.net/"],
-                            "script-src": ["'self'", "https://www.google.com/recaptcha/", "https://www.gstatic.com/recaptcha/", "https://csgo-app.jordanho.ca/", "https://jordanho.ca/"],
-                            "frame-src": ["'self'", "https://www.google.com/"],
-                            "default-src": ["'self'", "https://csgo-app.jordanho.ca/", "https://jordanho.ca/"],
-                            "connect-src": ["'self'", "https://csgo-app.jordanho.ca/", "https://jordanho.ca/"],
-                        },
-                    },
-                })
-            );
-
-            subDomainExpress.use(cors({
-                credentials: true, // set credentials true for secure httpOnly cookie
-                origin: [
-                    csgo_app_origin,
-                    personal_website_origin
-
-                ] // url of the frontend application and csgo app
-            }));
-            app.use(cors({
-                credentials: true,
-                origin: "*"
-            }));
-            subDomainExpress.use(cors({
-                credentials: true,
-                origin: "*"
-            }));
-            
-            subDomainExpress.use(vhost("csgo-app.jordanho.ca", require("./csgo_app_server"))).listen(CSGO_APP_PORT, () => {
-                console.log(`CSGO App Frontend Server Started at Port: ${CSGO_APP_PORT}`);
-            });
-
-            // //CSGO Web app
-            // app.use(express.static(path.join(__dirname, "./other_apps/csgo-utility-app/build")));
-
-            // app.get("*", function (req, res) {
+            // subDomainExpress.get("*", function (req, res) {
             //     res.sendFile(path.join(__dirname, "./other_apps/csgo-utility-app/build", "index.html"));
             // });
 
-            
 
-            // csgowebapp = app.listen(CSGO_APP_PORT, () => {
+            // express().use(vhost("csgo-app.jordanho.ca", require("./csgo_app_server"))).listen(CSGO_APP_PORT, () => {
             //     console.log(`CSGO App Frontend Server Started at Port: ${CSGO_APP_PORT}`);
             // });
+
+            let csgoRouter = express.Router();
+            csgoRouter.use(express.static(path.join(__dirname, "./other_apps/csgo-utility-app/build")));
+            csgoRouter.get("*", function (req, res) {
+                res.sendFile(path.join(__dirname, "./other_apps/csgo-utility-app/build", "index.html"));
+            });
+
+
+
+            let subdomainExpress = express();
+            subdomainExpress.use(subdomain('csgo-app.jordanho.ca', csgoRouter));
+
+            subdomainExpress.setHeader('Access-Control-Allow-Origin', '*');
+            subdomainExpress.listen(CSGO_APP_PORT, () => {
+                console.log(`ExpressJS Frontend Server Started at Port: ${CSGO_APP_PORT}`);
+            });
+
         }
+
+        //csgo app
+        app.use(csgoAppPublicRouter);
+
+        //public
+        app.use(publicRouter);
+
+        //routes for csrf and jwt tokens
+        app.use(authRouter);
+        app.use(privateRouter);
+
+        //for apps
+        app.use(privateRouter);
     })
 })
