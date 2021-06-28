@@ -101,7 +101,10 @@ app.use(limiter);
 //     ] // url of the frontend application and csgo app
 // }));
 
-app.use(cors())
+app.use(cors({
+    credentials: true,
+    origin: "*"
+}));
 
 //setup content securtiy policy inclusions for aws s3, google api
 csgoApp.use(
