@@ -154,11 +154,11 @@ app.use(
 );
 
 //for testing
-app.use(
-    helmet({
-        contentSecurityPolicy: false,
-    })
-);
+// app.use(
+//     helmet({
+//         contentSecurityPolicy: false,
+//     })
+// );
 
 //attempt to connect to db
 let dbConnect = new Promise((resolve, reject) => {
