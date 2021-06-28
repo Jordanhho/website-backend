@@ -178,17 +178,17 @@ dbConnect.then(() => {
         let csgowebapp = null;
         if (NODE_ENV === "production") {
 
-            //Personal website
-            //front end server static build files
-            app.use(express.static(path.join(__dirname, "./website-frontend/build")));
+            // //Personal website
+            // //front end server static build files
+            // app.use(express.static(path.join(__dirname, "./website-frontend/build")));
 
-            app.get("*", function (req, res) {
-                res.sendFile(path.join(__dirname, "./website-frontend/build", "index.html"));
-            });
+            // app.get("*", function (req, res) {
+            //     res.sendFile(path.join(__dirname, "./website-frontend/build", "index.html"));
+            // });
 
-            frontendServer = app.listen(REACT_PORT, () => {
-                console.log(`ExpressJS Frontend Server Started at Port: ${REACT_PORT}`);
-            });
+            // frontendServer = app.listen(REACT_PORT, () => {
+            //     console.log(`ExpressJS Frontend Server Started at Port: ${REACT_PORT}`);
+            // });
 
             //CSGO Web app
             app.use(express.static(path.join(__dirname, "./other_apps/csgo-utility-app/build")));
