@@ -2,7 +2,6 @@ node_modules/*
 config/.env
 controllers/csgo_controller.js
 aws/*
-db/models/csgo/*
 .vscode/*
 helper/coordinateGrid.js
 website-frontend/*

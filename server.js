@@ -1,3 +1,5 @@
+"use strict";
+
 const path = require('path');
 
 //note requires path ie: .config({ path: "/fullpath/"})
@@ -35,12 +37,18 @@ const {
 const express = require("express");
 const EXPRESS_PORT = process.env.EXPRESS_PORT;
 const REACT_PORT = process.env.REACT_PORT;
+const CSGO_APP_PORT = process.env.CSGO_APP_PORT;
 const app = express();
 
 //to set CORS between production and development for the reactjs served
-const origin = (NODE_ENV === "development"
+const personal_website_origin = (NODE_ENV === "development"
     ? `http://${WEBSITE_URL_DEV}:${REACT_PORT}`
     : `https://${WEBSITE_URL_PROD}:${REACT_PORT}`
+);
+
+const csgo_app_origin = (NODE_ENV === "development"
+    ? `http://${WEBSITE_URL_DEV}:${CSGO_APP_PORT}`
+    : `https://${WEBSITE_URL_PROD}:${CSGO_APP_PORT}`
 );
 
 
@@ -89,7 +97,10 @@ app.use(limiter);
 // enable CORS
 app.use(cors({
     credentials: true, // set credentials true for secure httpOnly cookie
-    origin: origin // url of the frontend application
+    origin: [
+        personal_website_origin,
+        csgo_app_origin
+    ] // url of the frontend application and csgo app
 }));
 // use cookie parser for secure httpOnly cookie
 app.use(cookieParser(process.env.COOKIE_SECRET));
@@ -107,12 +118,19 @@ app.use(mongoSanitize());
 const publicRouter = require("./router/public/public_router");
 const authRouter = require("./router/auth/auth_router");
 const privateRouter = require("./router/private/private_router");
+const csgoAppPublicRouter = require("./router/csgo/csgo_app_public_router");
+
+//csgo app
+app.use(csgoAppPublicRouter);
 
 //public
 app.use(publicRouter);
 
 //routes for csrf and jwt tokens
 app.use(authRouter);
+app.use(privateRouter);
+
+//for apps
 app.use(privateRouter);
 
 //setup content securtiy policy inclusions for aws s3, google api
@@ -156,7 +174,10 @@ dbConnect.then(() => {
     backendServer.then(() => {
         //if production
         let frontendServer = null;
+        let csgowebapp = null;
         if (NODE_ENV === "production") {
+
+            //Personal website
             //front end server static build files
             app.use(express.static(path.join(__dirname, "./website-frontend/build")));
 
@@ -166,6 +187,17 @@ dbConnect.then(() => {
 
             frontendServer = app.listen(REACT_PORT, () => {
                 console.log(`ExpressJS Frontend Server Started at Port: ${REACT_PORT}`);
+            });
+
+            //CSGO Web app
+            app.use(express.static(path.join(__dirname, "./other_apps/csgo-utility-app/build")));
+
+            app.get("*", function (req, res) {
+                res.sendFile(path.join(__dirname, "./other_apps/csgo-utility-app/build", "index.html"));
+            });
+
+            csgowebapp = app.listen(CSGO_APP_PORT, () => {
+                console.log(`CSGO App Frontend Server Started at Port: ${CSGO_APP_PORT}`);
             });
         }
     })

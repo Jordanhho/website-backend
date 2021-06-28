@@ -389,10 +389,9 @@ router.get(apiRoutes.ABOUT_WEBSITE, async function (req, res) {
 
 
 // router.get("/api/test", async function (req, res) {
-
 //     //await initResumeDisplay();
 //     //await initApps();
-//     await initAboutMe();
+//     // await initAboutMe();
 
 //     return handleRes(
 //         req,

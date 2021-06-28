@@ -10,6 +10,123 @@ const {
     updateAboutMe
 } = require("./private_db_controller");
 
+const {
+    upsertMap,
+    insertMap,
+    upsertUtil
+} = require("./csgo_app_private_db_controller");
+
+async function initCsgoPublicUtilDetails() {
+    await upsertUtil({
+        util_id: "xbox_smoke",
+        util_img_file_id_list: [],
+        map_id: "de_dust2",
+        init_coord_x: 440,
+        init_coord_y: 860,
+        target_coord_x: 476,
+        target_coord_y: 400,
+        util_type: "smoke",
+        is_private: false,
+        util_name: "Xbox smoke",
+        util_description: "Line up according to the picture, aim as shown, stand jump throw.",   
+        is_64_tick: true,
+        is_128_tick: true
+    });
+    await upsertUtil({
+        util_id: "ct_smoke",
+        util_img_file_id_list: [],
+        map_id: "de_dust2",
+        init_coord_x: 485,
+        init_coord_y: 410,
+        target_coord_x: 494,
+        target_coord_y: 245,
+        util_type: "smoke",
+        is_private: false,
+        util_name: "CT Smoke",
+        util_description: "Line up according to the picture, aim as shown, stand throw.",
+        is_64_tick: true,
+        is_128_tick: true
+    });
+    await upsertUtil({
+        util_id: "b_door_smoke",
+        util_img_file_id_list: [],
+        map_id: "de_dust2",
+        init_coord_x: 140,
+        init_coord_y: 440,
+        target_coord_x: 245,
+        target_coord_y: 235,
+        util_type: "smoke",
+        is_private: false,
+        util_name: "B doors smoke",
+        util_description: "Line up according to the picture, aim as shown, stand throw.",
+        is_64_tick: true,
+        is_128_tick: true
+    });
+    await upsertUtil({
+        util_id: "car_molotov",
+        util_img_file_id_list: [],
+        map_id: "de_dust2",
+        init_coord_x: 733,
+        init_coord_y: 536,
+        target_coord_x: 930,
+        target_coord_y: 297,
+        util_type: "molotov",
+        is_private: false,
+        util_name: "Car molotov",
+        util_description: "Line up according to the picture, aim as shown, stand jump throw.",
+        is_64_tick: false,
+        is_128_tick: true
+    });
+    await upsertUtil({
+        util_id: "long_a_flash",
+        util_img_file_id_list: [],
+        map_id: "de_dust2",
+        init_coord_x: 820,
+        init_coord_y: 266,
+        target_coord_x: 820,
+        target_coord_y: 466,
+        util_type: "flash",
+        is_private: false,
+        util_name: "Long A Flash",
+        util_description: "Line up according to the picture, aim as shown, stand throw.",
+        is_64_tick: true,
+        is_128_tick: true
+    });
+}
+
+async function initCsgoMaps() {
+    await upsertMap({
+        cloudfront_map_url: "https://dkbz0bts1nczj.cloudfront.net/csgo-util-app-public-files/maps/de_dust2.png",
+        map_name: "Dust 2",
+        map_id: "de_dust2"
+    });
+    await upsertMap({
+        cloudfront_map_url: "https://dkbz0bts1nczj.cloudfront.net/csgo-util-app-public-files/maps/de_inferno.png",
+        map_name: "Inferno",
+        map_id: "de_inferno"
+    });
+    await upsertMap({
+        cloudfront_map_url: "https://dkbz0bts1nczj.cloudfront.net/csgo-util-app-public-files/maps/de_mirage.png",
+        map_name: "Mirage",
+        map_id: "de_mirage"
+    });
+    await upsertMap({
+        cloudfront_map_url: "https://dkbz0bts1nczj.cloudfront.net/csgo-util-app-public-files/maps/de_nuke.png",
+        map_name: "Nuke",
+        map_id: "de_nuke"
+    });
+    await upsertMap({
+        cloudfront_map_url: "https://dkbz0bts1nczj.cloudfront.net/csgo-util-app-public-files/maps/de_train.png",
+        map_name: "Train",
+        map_id: "de_train"
+    });
+    await upsertMap({
+        cloudfront_map_url: "https://dkbz0bts1nczj.cloudfront.net/csgo-util-app-public-files/maps/de_vertigo.png",
+        map_name: "Vertigo",
+        map_id: "de_vertigo"
+    });
+}
+
 async function initAdminSettings() {
     await insertAdminSettings({
         enable_new_accounts: false,
@@ -300,6 +417,9 @@ async function initBucketFiles() {
 }
 
 module.exports = {
+    initCsgoMaps,
+    initCsgoPublicUtilDetails,
+
     initResumeDisplay,
     initJordanHo,
     initApps,
