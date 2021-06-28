@@ -12,6 +12,7 @@ const rateLimit = require("express-rate-limit");
 const NODE_ENV = process.env.NODE_ENV;
 const WEBSITE_URL_DEV = process.env.WEBSITE_URL_DEV;
 const WEBSITE_URL_PROD = process.env.WEBSITE_URL_PROD;
+const WEBSITE_CSGO_APP_URL_PROD = process.env.WEBSITE_CSGO_APP_URL_PROD;
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
 //security
