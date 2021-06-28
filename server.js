@@ -143,6 +143,8 @@ app.use(
                 "img-src": ["'self'", "https://private-personal-website-storage.s3.us-west-2.amazonaws.com/", "https://dkbz0bts1nczj.cloudfront.net/"],
                 "script-src": ["'self'", "https://www.google.com/recaptcha/", "https://www.gstatic.com/recaptcha/", "https://csgo-app.jordanho.ca/", "https://jordanho.ca/"],
                 "frame-src": ["'self'", "https://www.google.com/"],
+                "default-src": ["'self'", "https://csgo-app.jordanho.ca/", "https://jordanho.ca/"],
+                "connect-src": ["'self'", "https://csgo-app.jordanho.ca/", "https://jordanho.ca/"],
             },
         },
     })
