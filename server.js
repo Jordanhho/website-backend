@@ -28,6 +28,8 @@ const cookieParser = require("cookie-parser");
 //to sanitize all input
 const mongoSanitize = require('express-mongo-sanitize');
 
+var vhost = require('vhost');
+
 //db
 const {
     mongoDbUrl,
@@ -40,6 +42,7 @@ const EXPRESS_PORT = process.env.EXPRESS_PORT;
 const REACT_PORT = process.env.REACT_PORT;
 const CSGO_APP_PORT = process.env.CSGO_APP_PORT;
 const app = express();
+const csgoApp = express();
 
 //to set CORS between production and development for the reactjs served
 const personal_website_origin = (NODE_ENV === "development"
@@ -188,27 +191,37 @@ dbConnect.then(() => {
         if (NODE_ENV === "production") {
 
             // //Personal website
-            // //front end server static build files
-            // app.use(express.static(path.join(__dirname, "./website-frontend/build")));
-
-            // app.get("*", function (req, res) {
-            //     res.sendFile(path.join(__dirname, "./website-frontend/build", "index.html"));
-            // });
-
-            // frontendServer = app.listen(REACT_PORT, () => {
-            //     console.log(`ExpressJS Frontend Server Started at Port: ${REACT_PORT}`);
-            // });
-
-            //CSGO Web app
-            app.use(express.static(path.join(__dirname, "./other_apps/csgo-utility-app/build")));
+            //front end server static build files
+            app.use(express.static(path.join(__dirname, "./website-frontend/build")));
 
             app.get("*", function (req, res) {
-                res.sendFile(path.join(__dirname, "./other_apps/csgo-utility-app/build", "index.html"));
+                res.sendFile(path.join(__dirname, "./website-frontend/build", "index.html"));
             });
 
-            csgowebapp = app.listen(CSGO_APP_PORT, () => {
+            frontendServer = app.listen(REACT_PORT, () => {
+                console.log(`ExpressJS Frontend Server Started at Port: ${REACT_PORT}`);
+            });
+
+            csgoApp.use(express.static(path.join(__dirname, "./other_apps/csgo-utility-app/build")));
+            csgoApp.get("*", function (req, res) {
+                res.sendFile(path.join(__dirname, "./other_apps/csgo-utility-app/build", "index.html"));
+            });
+            express().use(vhost("csgo-app.jordanho.ca", csgoApp)).listen(CSGO_APP_PORT, () => {
                 console.log(`CSGO App Frontend Server Started at Port: ${CSGO_APP_PORT}`);
             });
+
+            // //CSGO Web app
+            // app.use(express.static(path.join(__dirname, "./other_apps/csgo-utility-app/build")));
+
+            // app.get("*", function (req, res) {
+            //     res.sendFile(path.join(__dirname, "./other_apps/csgo-utility-app/build", "index.html"));
+            // });
+
+            
+
+            // csgowebapp = app.listen(CSGO_APP_PORT, () => {
+            //     console.log(`CSGO App Frontend Server Started at Port: ${CSGO_APP_PORT}`);
+            // });
         }
     })
 })
