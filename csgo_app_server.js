@@ -92,14 +92,16 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // enable CORS
-app.use(cors({
-    credentials: true, // set credentials true for secure httpOnly cookie
-    origin: [
-        csgo_app_origin,
-        personal_website_origin
+// app.use(cors({
+//     credentials: true, // set credentials true for secure httpOnly cookie
+//     origin: [
+//         csgo_app_origin,
+//         personal_website_origin
 
-    ] // url of the frontend application and csgo app
-}));
+//     ] // url of the frontend application and csgo app
+// }));
+
+app.use(cors())
 
 //setup content securtiy policy inclusions for aws s3, google api
 csgoApp.use(
