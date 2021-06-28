@@ -1,92 +1,24 @@
 const AboutMe = require("../../db/models/public/aboutMe");
 const AppDetails = require("../../db/models/public/appDetails");
-const AdminSettings = require("../../db/models/admin/adminSettings");
+const AdminSettings = require("../../db/models/settings/adminSettings");
+const ResumeDisplay = require("../../db/models/public/resumeDisplay");
+const JordanHo = require("../../db/models/public/jordanHo");
+const BucketFiles = require("../../db/models/private/bucketFiles");
 
 const {
     dbDebugMsges
 } = require("../../config/debug");
 
-async function initAdminSettings() {
-    insertAdminSettings()
-}
+const {
+    getNormalObjFromDoc
+} = require("./db_utility");
 
-
-/** initialization of db collections */
-async function initApps() {
-    await insertApp({
-        app_id: "csgo_utility_app",
-        app_name: "CSGO Utility App",
-        app_description: "A web application to allow competitive CSGO players to save a library of utility and share them privately with their team",
-        github_url: "github_url",
-        app_url: "todo_app_url",
-        app_type: "web_app",
-        is_wip: true
-    });
-    await insertApp({
-        app_id: "overlay_translate_app",
-        app_name: "Overlay Translate App",
-        app_description: "An overlay windows application to translate anything on your computer screen on the fly.",
-        github_url: "github_url",
-        app_url: "todo_app_url",
-        app_type: "windows_app",
-        is_wip: true
-    });
-    await insertApp({
-        app_id: "cite_cam",
-        app_name: "Cite Cam App",
-        app_description: "An Android application that creates an essay citation from a quick scan of a book barcode.",
-        github_url: "github_url",
-        app_url: "todo_app_url",
-        app_type: "android_app",
-        is_wip: true
-    });
-}
-
-async function initAboutMe() {
-    const initData = {
-        firstname: "Jordan",
-        lastname: "Ho",
-        email: "jordanhho@gmail.com",
-
-        education_description: "I have graduated from Simon Fraser University in 2020 with a Bachelor of Science degree. I major in Software Systems, a specialization of a computer science degree. I have also taken a course at Cisco Networking Academy for IT Essentials and CCNA.",
-
-        school_experience_description: "I have worked on several web applications for school projects. The applications were a VueJS scheduling application, a VueJS elevator monitoring application, and an Angular onsite work report writer application.Through working on these projects, I have developed my teamwork skills to be able to adapt to different group members.",
-
-        work_experience_description: "I have done 2 co-ops during my undergraduate studies.< br />My first co- op was at Simon Fraser University's School of Business where I worked with a team of 6 in agile as a Full-Stack Web Developer. During the co-op, I have worked on improving and extending their education management systems for professors, advisors, and students using PHP and JQuery. I have also helped them build from the ground up a new ReactJS application for future purposes. < br /> My second co - op was at Celayix where I worked with a team of 10 in agile as a Front - end Web Application Developer.Celayix is a software company that develops a scheduling application to make scheduling easy.During this co - op, my responsibilities were to fix bugs and implement new features for the app.I have also worked with QA and UX developers. ",
-
-        skill_specialization_description: "My main development languages include Javascript, Java, C, PHP, and Python. < br /> For software suites, I am familiar with using Jetbrain programs, Visual Studio, JIRA, Youtrack, and Confluence project management trackers. < br /> I am also familiar with using Google Cloud Platform, AWS, Docker, and Git. < br /> For operating systems, I am very familiar with using Ubuntu Linux, Mac, and Windows 10. <br/> My main javascript frameworks I use is ReactJS, JQuery, and NodeJS. <br /> For databases I am familar with using MySQL and MongoDB. ",
-
-        hobby_description: "My hobbies include playing video games with friends, and watching Japanese Anime. I'm also a very competitive person, so I enjoy competing at video games.",
-
-        esports_description: "I have previously competed professionally in the Tecent Sponsored First Person Shooter game called Crossfire. This game requires fast reflexes and thinking, but also requires strong communication and teamwork skills. It also requires a steady level of work ethics to train yourself to be at the top of the game. I have also competed at a high amateur level in Counter-Strike Global Offensive ESEA that helped me further develop my teamwork and communication skills to seamlessly work with my teammates. Through competing in esports with many teams, I have developed my teamwork and communication skills to a high level that were easily applied to my workplaces and school project work. ",
-
-        goal_description: "I am currently looking for a job that is in the web development industry. I am interested in Full-stack web development positions that use ReactJS. I am confident that I can apply the skills I have developed and gained from my co-ops, school projects, and esports teamwork experience at your company. My contact me at my email details below.  ",
-
-        linkedin_url: "https://www.linkedin.com/in/jordanhho/",
-        github_url: "https://github.com/Jordanhho",
-        resume_url: "resume_link",
-        youtube_url: "https://www.youtube.com/channel/UC8MYJwWZQr6c6Ryjkt6vv4Q",
-        twitch_url: "https://www.twitch.tv/yuukicf",
-        steam_url: "https://steamcommunity.com/profiles/76561198022667905",
-        crossfire_profile_url: "https://www.crossfirestars.com/en/stats/player?playerNo=3298",
-        esea_url: "https://play.esea.net/users/2282189",
-    }
-    await insertAboutMe(initData);
-};
-
-async function initAdminSettings() {
-    await insertAdminSettings({
-        enable_new_accounts: false,
-        enable_emailing: false,
-        enable_change_password: false
-    });
-}
 
 /** apps data manipulation */
-async function insertApp(data) {
+async function insertApp(data, safe = true) {
     try {
         const app = new AppDetails(data);
-        const doc = await new Promise((resolve, reject) => {
+        const savedDocDbObj = await new Promise((resolve, reject) => {
             app.save(function (err, doc) {
                 if (err) {
                     dbDebugMsges(err);
@@ -95,8 +27,14 @@ async function insertApp(data) {
                 resolve(doc);
             });
         });
+
+        const doc = await AppDetails.findOne({ _id: savedDocDbObj._id }).lean();
+        if (!doc) {
+            dbDebugMsges("Insertion failed, there is an existing object: ", app);
+            return null;
+        }
         dbDebugMsges("Successfully inserted app data", doc);
-        return doc.toObject();
+        return getNormalObjFromDoc(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -104,47 +42,47 @@ async function insertApp(data) {
 }
 
 //if id, update by id
-async function upsertAppDetails(data) {
+async function upsertAppDetails(data, safe = true) {
     try {
         const doc = await AppDetails.findOneAndUpdate(
             { app_id: data.app_id },
             data,
             { new: true, upsert: true }
-        )
+        ).lean();
         if (!doc) {
             dbDebugMsges("No upsert executed, there already exists an identical entry", data.email);
             return null;
         }
         dbDebugMsges("Successfully upserted an app details", data.app_id, doc);
-        return doc.toObject();
+        return getNormalObjFromDoc(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function updateAppById(data) {
+async function updateAppById(data, safe = true) {
     try {
         const doc = await AppDetails.findOneAndUpdate(
             { app_id: data.app_id },
             data,
             { new: true }
-        );
+        ).lean();
         if (!doc) {
             dbDebugMsges("No such app data found");
             return null;
         }
         dbDebugMsges("Successfully updated app data", doc);
-        return doc.toObject();
+        return getNormalObjFromDoc(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function removeAppDetailById(app_id) {
+async function removeAppDetailById(app_id, safe = true) {
     try {
-        await AppDetails.deleteOne({ app_id: app_id });
+        await AppDetails.deleteOne({ app_id: app_id }).lean();
         dbDebugMsges("Successfully removed the following app details", app_id);
         return true;
     } catch (err) {
@@ -155,10 +93,10 @@ async function removeAppDetailById(app_id) {
 
 /** about me data manipulation */
 
-async function insertAboutMe(data) {
+async function insertAboutMe(data, safe = true) {
     try {
         const aboutMe = new AboutMe(data);
-        const doc = await new Promise((resolve, reject) => {
+        const savedDocDbObj = await new Promise((resolve, reject) => {
             aboutMe.save(function (err, doc) {
                 if (err) {
                     dbDebugMsges(err);
@@ -167,26 +105,32 @@ async function insertAboutMe(data) {
                 resolve(doc);
             });
         });
-        return doc.toObject();
+
+        const doc = await AboutMe.findOne({ _id: savedDocDbObj._id }).lean();
+        if (!doc) {
+            dbDebugMsges("Insertion failed, there is an existing object: ", aboutMe);
+            return null;
+        }
+        return getNormalObjFromDoc(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function updateAboutMe(data) {
+async function updateAboutMe(data, safe = true) {
     try {
         const doc = await AboutMe.findOneAndUpdate(
             {},
             data,
             { new: true }
-        );
+        ).lean();
         if (!doc) {
             dbDebugMsges("No such aboutMe data found");
             return null;
         }
         dbDebugMsges("Successfully updated aboutMe data", doc);
-        return doc.toObject();
+        return getNormalObjFromDoc(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -195,10 +139,10 @@ async function updateAboutMe(data) {
 
 /** admin settings */
 
-async function insertAdminSettings(data) {
+async function insertAdminSettings(data, safe = true) {
     try {
         const adminSettings = new AdminSettings(data);
-        const doc = await new Promise((resolve, reject) => {
+        const savedDocDbObj = await new Promise((resolve, reject) => {
             adminSettings.save(function (err, doc) {
                 if (err) {
                     dbDebugMsges(err);
@@ -207,41 +151,194 @@ async function insertAdminSettings(data) {
                 resolve(doc);
             });
         });
-        return doc.toObject();
+        //get normal object for insert
+        const doc = await AdminSettings.findOne({ _id: savedDocDbObj._id}).lean();
+        if (!doc) {
+            dbDebugMsges("Insertion failed, there is an existing object: ", adminSettings);
+            return null;
+        }
+        dbDebugMsges("Successfully inserted admin settings.");
+
+        return getNormalObjFromDoc(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function updateAdminSettings(data) {
+async function upsertBucketFile(data, safe = true) {
+    try {
+        const doc = await BucketFiles.findOneAndUpdate(
+            { file_id: data.file_id },
+            data,
+            { new: true, upsert: true }
+        ).lean();
+        if (!doc) {
+            dbDebugMsges("No upsert executed, there already exists an identical entry");
+            return null;
+        }
+        dbDebugMsges("Successfully upserted a bucket file");
+        return getNormalObjFrom(doc, safe);
+    } catch (err) {
+        dbDebugMsges(err);
+        return null;
+    }
+}
+
+async function updateBucketFile(data, safe = true) {
+    try {
+        const doc = await BucketFiles.findOneAndUpdate(
+            { file_id: data.file_id },
+            data,
+            { new: true }
+        ).lean();
+        if (!doc) {
+            dbDebugMsges("No such bucket file found");
+            return null;
+        }
+        dbDebugMsges("Successfully updated bucket file", doc);
+        return getNormalObjFromDoc(doc, safe);
+    } catch (err) {
+        dbDebugMsges(err);
+        return null;
+    }
+}
+
+async function getBucketFileByFileId(file_id, safe = true) {
+    try {
+        const doc = await BucketFiles.findOne({ file_id: file_id}).lean();
+        if (!doc) {
+            dbDebugMsges("No such file found", file_id);
+            return null;
+        }
+        dbDebugMsges("Successfully found file by file_id", file_id, doc);
+        return getNormalObjFromDoc(doc, safe);
+    } catch (err) {
+        dbDebugMsges(err);
+        return null;
+    }
+}
+
+
+async function updateAdminSettings(data, safe = true) {
     try {
         const doc = await AdminSettings.findOneAndUpdate(
             {},
             data,
             { new: true }
-        );
+        ).lean();
         if (!doc) {
             dbDebugMsges("No such admin settings found");
             return null;
         }
         dbDebugMsges("Successfully updated admin settings", doc);
-        return doc.toObject();
+        return getNormalObjFromDoc(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
     }
 }
 
-async function getAdminSettings() {
+async function getAdminSettings(safe = true) {
     try {
-        const doc = await AdminSettings.findOne();
+        const doc = await AdminSettings.findOne().lean();
         if (!doc) {
             dbDebugMsges("No such admin settings found");
             return null;
         }
         dbDebugMsges("Successfully found admin settings", doc);
-        return doc.toObject();
+        return getNormalObjFromDoc(doc, safe);
+    } catch (err) {
+        dbDebugMsges(err);
+        return null;
+    }
+}
+
+async function upsertResumeDisplay(data, safe = true) {
+    try {
+        const doc = await ResumeDisplay.findOneAndUpdate(
+            {},
+            data,
+            { new: true, upsert: true }
+        ).lean();
+        if (!doc) {
+            dbDebugMsges("No upsert executed, there already exists an identical entry");
+            return null;
+        }
+        dbDebugMsges("Successfully upserted an resume display data");
+        return getNormalObjFromDoc(doc, safe);
+    } catch (err) {
+        dbDebugMsges(err);
+        return null;
+    }
+}
+
+async function updateResumeDisplay(data, safe = true) {
+    try {
+        const doc = await ResumeDisplay.findOneAndUpdate(
+            {},
+            data,
+            { new: true }
+        ).lean();
+        if (!doc) {
+            dbDebugMsges("No such resume display data found");
+            return null;
+        }
+        dbDebugMsges("Successfully updated resume display data", doc);
+        return getNormalObjFromDoc(doc, safe);
+    } catch (err) {
+        dbDebugMsges(err);
+        return null;
+    }
+}
+
+async function upsertJordanHo(data, safe = true) {
+    try {
+        const doc = await JordanHo.findOneAndUpdate(
+            {},
+            data,
+            { new: true, upsert: true }
+        ).lean();
+        if (!doc) {
+            dbDebugMsges("No upsert executed, there already exists an identical entry");
+            return null;
+        }
+        dbDebugMsges("Successfully upserted Jordan Ho data");
+        return getNormalObjFromDoc(doc, safe);
+    } catch (err) {
+        dbDebugMsges(err);
+        return null;
+    }
+}
+
+async function updateJordanHo(data, safe = true) {
+    try {
+        const doc = await JordanHo.findOneAndUpdate(
+            {},
+            data,
+            { new: true }
+        ).lean();
+        if (!doc) {
+            dbDebugMsges("No such jordan Ho data found");
+            return null;
+        }
+        dbDebugMsges("Successfully updated Jordan Ho data", doc);
+        return getNormalObjFromDoc(doc, safe);
+    } catch (err) {
+        dbDebugMsges(err);
+        return null;
+    }
+}
+
+async function getJordanHo(safe = true) {
+    try {
+        const doc = await JordanHo.findOne({}).lean();
+        if (!doc) {
+            dbDebugMsges("No such Jordan Ho data found");
+            return null;
+        }
+        dbDebugMsges("Successfully found Jordan Ho data", doc);
+        return getNormalObjFromDoc(doc, safe);
     } catch (err) {
         dbDebugMsges(err);
         return null;
@@ -249,10 +346,6 @@ async function getAdminSettings() {
 }
 
 module.exports = {
-    initAboutMe,
-    initApps,
-    initAdminSettings,
-
     insertApp,
     upsertAppDetails,
     removeAppDetailById,
@@ -260,8 +353,19 @@ module.exports = {
 
     insertAboutMe,
     updateAboutMe,
+
+    updateBucketFile,
+    upsertBucketFile,
+    getBucketFileByFileId,
     
     insertAdminSettings,
     updateAdminSettings,
-    getAdminSettings
+    getAdminSettings,
+
+    updateResumeDisplay,
+    upsertResumeDisplay,
+
+    upsertJordanHo,
+    updateJordanHo,
+    getJordanHo
 }
