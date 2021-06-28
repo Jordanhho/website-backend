@@ -26,6 +26,22 @@ async function getApps(safe = true) {
     }
 }
 
+
+async function getAppByAppId(app_id, safe = true) {
+    try {
+        const docs = await AppDetails.findOne({ app_id: app_id}).lean();
+        if (!docs) {
+            dbDebugMsges("No app found", app_id);
+            return null;
+        }
+        dbDebugMsges("Retrived app details", docs);
+        return getNormalObjFromDoc(docs, safe);
+    } catch (err) {
+        dbDebugMsges(err);
+        return null;
+    }
+}
+
 async function getAboutMe(safe = true) {
     try {
         const doc = await AboutMe.findOne().lean();
@@ -58,6 +74,7 @@ async function getResumeDisplay(safe = true) {
 
 module.exports = {
     getApps,
+    getAppByAppId,
     getAboutMe,
     getResumeDisplay
 }

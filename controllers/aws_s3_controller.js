@@ -61,7 +61,6 @@ async function getS3SignedUrl(key, expires = DEFAULT_S3_URL_EXPIRE_SECONDS) {
     });
 }
 
-
 //returns the signed url object with expire_at time and the url
 //returns null if failure
 async function getS3UrlBucketFile(bucketObject) {

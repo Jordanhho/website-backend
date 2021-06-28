@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const BucketFile = require("../aws/bucketFile");
-
 const AboutMeSchema = new Schema({
     profile_picture_file_id: {
         type: String
