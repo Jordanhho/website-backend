@@ -106,8 +106,8 @@ app.use(bodyParser.json());
 app.use(mongoSanitize());
 
 const publicRouter = require("./router/public/public_router");
-const authRouter = require("./router/auth/auth_router");
-const privateRouter = require("./router/private/private_router");
+const csgoAuthRouter = require("./router/auth/csgo_auth_router");
+// const privateRouter = require("./router/private/private_router");
 const csgoAppPublicRouter = require("./router/csgo/csgo_app_public_router");
 
 //csgo app
@@ -117,8 +117,7 @@ app.use(csgoAppPublicRouter);
 app.use(publicRouter);
 
 // //routes for csrf and jwt tokens
-// app.use(authRouter);
-// app.use(privateRouter);
+app.use(csgoAuthRouter);
 
 // //for apps
 // app.use(privateRouter);
