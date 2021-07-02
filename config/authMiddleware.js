@@ -30,6 +30,7 @@ const adminAuthMiddleware = async function (req, res, next) {
             res, 
             401,
             {
+                error: true,
                 resMsg: "Unauthorized Access",
                 debugMsg: "No access token in req header authorization"
             }   
@@ -46,6 +47,7 @@ const adminAuthMiddleware = async function (req, res, next) {
             res, 
             403,
             {
+                error: true,
                 resMsg: "Forbidden Access",
                 debugMsg: "No csrf token in req header"
             }
@@ -64,6 +66,7 @@ const adminAuthMiddleware = async function (req, res, next) {
             res,
             401,
             {
+                error: true,
                 resMsg: "Unauthorized Access",
                 debugMsg: "Either: no csrf token in req header, no refresh token that is active, or invalid refresh token/csrf token"
             }
@@ -78,7 +81,11 @@ const adminAuthMiddleware = async function (req, res, next) {
                 req,
                 res,
                 401,
-                err
+                {
+                    error: true,
+                    resMsg: "Unauthorized Access",
+                    debugMsg: "User is not at ADMIN Level"
+                }
             );
         else {
             req.user = payload; //set the user to req so other routes can use it
@@ -94,6 +101,7 @@ const adminAuthMiddleware = async function (req, res, next) {
                     res,
                     401,
                     {
+                        error: true,
                         resMsg: "Unauthorized Access",
                         debugMsg: "User is not at ADMIN Level"
                     }
@@ -118,6 +126,7 @@ const csgoAppAuthMiddleware = async function (req, res, next) {
             res,
             401,
             {
+                error: true,
                 resMsg: "Unauthorized Access",
                 debugMsg: "No access token in req header authorization"
             }
@@ -134,6 +143,7 @@ const csgoAppAuthMiddleware = async function (req, res, next) {
             res,
             403,
             {
+                error: true,
                 resMsg: "Forbidden Access",
                 debugMsg: "No csrf token in req header"
             }
@@ -152,6 +162,7 @@ const csgoAppAuthMiddleware = async function (req, res, next) {
             res,
             401,
             {
+                error: true,
                 resMsg: "Unauthorized Access",
                 debugMsg: "Either: no csrf token in req header, no refresh token that is active, or invalid refresh token/csrf token"
             }
@@ -176,12 +187,13 @@ const csgoAppAuthMiddleware = async function (req, res, next) {
             const userDbObj = await getUserByEmail(email);
 
             //check if user is admin level, then if so, allow pass.
-            if (userDbObj.level !== "ADMIN" || userDbObj.level !== "MEMBER") {
+            if (userDbObj.level !== "ADMIN" && userDbObj.level !== "MEMBER") {
                 return handleRes(
                     req,
                     res,
                     401,
                     {
+                        error: true,
                         resMsg: "Unauthorized Access",
                         debugMsg: "User is not at ADMIN or MEMBER Level"
                     }

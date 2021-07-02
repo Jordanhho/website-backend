@@ -8,6 +8,7 @@
     "axios": "^0.21.1",
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
+    "concurrently": "^6.2.0",
     "connect": "^3.7.0",
     "connect-mongo": "^4.4.1",
     "cookie-parser": "^1.4.5",
@@ -37,7 +38,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "dev_start": "nodemon server.js"
+    "dev": "concurrently --kill-others \"node server.js\" \"node csgo_app_server.js\"",
+    "dev_start": "nodemon server.js",
+    "dev_csgo": "nodemon csgo_app_server.js"
   },
   "repository": {
     "type": "git",

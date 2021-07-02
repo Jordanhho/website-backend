@@ -170,7 +170,7 @@ router.post(apiRoutes.CSGO_APP_LOGIN, async function (req, res) {
     }
 
     //check if user is admin or member level, then if so, allow pass.
-    if (userDbObj.level !== "ADMIN" || userDbObj.level !== "MEMBER") {
+    if (userDbObj.level !== "ADMIN" && userDbObj.level !== "MEMBER") {
         return handleRes(
             req,
             res,
