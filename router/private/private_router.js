@@ -5,7 +5,7 @@ router = express.Router();
 
 //jwt and csrf token auth
 const {
-    authMiddleware
+    adminAuthMiddleware
 } = require("../../config/authMiddleware");
 
 const {
@@ -41,7 +41,7 @@ const PROFILE_PICTURE_BUCKET_KEY = "jordan_profile_picture.jpg";
 
 /* GET */
 //to get settings such as disable add account, emailing
-router.get(apiRoutes.GET_ADMIN_SETTINGS, authMiddleware, async (req, res) => {
+router.get(apiRoutes.GET_ADMIN_SETTINGS, adminAuthMiddleware, async (req, res) => {
     let adminSettings = await getAdminSettings();
 
     if(!adminSettings) {
@@ -71,7 +71,7 @@ router.get(apiRoutes.GET_ADMIN_SETTINGS, authMiddleware, async (req, res) => {
 
 
 //* POST */
-router.post(apiRoutes.UPDATE_ABOUT_ME, authMiddleware, async (req, res) => {
+router.post(apiRoutes.UPDATE_ABOUT_ME, adminAuthMiddleware, async (req, res) => {
 
     //check if data is empty
     if (!req.body || Object.keys(req.body).length <= 0) {
@@ -113,7 +113,7 @@ router.post(apiRoutes.UPDATE_ABOUT_ME, authMiddleware, async (req, res) => {
     );
 });
 
-router.post(apiRoutes.UPDATE_APPS, authMiddleware, async (req, res) => {
+router.post(apiRoutes.UPDATE_APPS, adminAuthMiddleware, async (req, res) => {
     //check if data is empty
     if (!req.body || Object.keys(req.body).length <= 0) {
         return handleRes(
@@ -184,7 +184,7 @@ router.post(apiRoutes.UPDATE_APPS, authMiddleware, async (req, res) => {
 });
 
 
-router.post(apiRoutes.REMOVE_APP, authMiddleware, async (req, res) => {
+router.post(apiRoutes.REMOVE_APP, adminAuthMiddleware, async (req, res) => {
 
     //check if data is empty
     if (!req.body.app_id) {
@@ -226,7 +226,7 @@ router.post(apiRoutes.REMOVE_APP, authMiddleware, async (req, res) => {
 });
 
 //to update ettings such as disable add account, emailing
-router.post(apiRoutes.UPDATE_ADMIN_SETTINGS, authMiddleware, async (req, res) => {
+router.post(apiRoutes.UPDATE_ADMIN_SETTINGS, adminAuthMiddleware, async (req, res) => {
 
     //check if data is empty
     if (!req.body.adminSettings) {
@@ -272,7 +272,7 @@ router.post(apiRoutes.UPDATE_ADMIN_SETTINGS, authMiddleware, async (req, res) =>
 });
 
 
-router.post(apiRoutes.UPDATE_RESUME_DISPLAY, authMiddleware, async (req, res) => {
+router.post(apiRoutes.UPDATE_RESUME_DISPLAY, adminAuthMiddleware, async (req, res) => {
 
     //check if req.body is empty
     if (!req.body || Object.keys(req.body).length <= 0) {
@@ -317,7 +317,7 @@ router.post(apiRoutes.UPDATE_RESUME_DISPLAY, authMiddleware, async (req, res) =>
 
 
 
-router.post(apiRoutes.GET_JORDAN_HO, authMiddleware, async (req, res) => {
+router.post(apiRoutes.GET_JORDAN_HO, adminAuthMiddleware, async (req, res) => {
     const jordanHoData = await getJordanHo();
     if (!jordanHoData) {
         return handleRes(
@@ -383,7 +383,7 @@ router.post(apiRoutes.GET_JORDAN_HO, authMiddleware, async (req, res) => {
     );
 });
 
-router.post(apiRoutes.UPDATE_JORDAN_HO, authMiddleware, 
+router.post(apiRoutes.UPDATE_JORDAN_HO, adminAuthMiddleware,
     upload.fields(
     [
         { name: 'resume', maxCount: 1 },
