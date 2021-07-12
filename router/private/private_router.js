@@ -36,9 +36,6 @@ const {
     getRenewedS3UrlBucketFile
 } = require("../../controllers/aws_s3_controller");
 
-const RESUME_BUCKET_KEY = "jordan_resume.pdf";
-const PROFILE_PICTURE_BUCKET_KEY = "jordan_profile_picture.jpg";
-
 /* GET */
 //to get settings such as disable add account, emailing
 router.get(apiRoutes.GET_ADMIN_SETTINGS, adminAuthMiddleware, async (req, res) => {
@@ -405,8 +402,6 @@ router.post(apiRoutes.UPDATE_JORDAN_HO, adminAuthMiddleware,
         );
     }
     const jordanHoData = req.body;
-
-
     const updatedJordanHoData = await updateJordanHo(jordanHoData);
 
     let resume = null;
@@ -430,8 +425,11 @@ router.post(apiRoutes.UPDATE_JORDAN_HO, adminAuthMiddleware,
                 );
             }
 
+            //query for file details
+            let resumeDetails = await getBucketFileByFileId(updatedJordanHoData.resume_file_id);
+
             //upload success to s3
-            let result = await uploadToS3(RESUME_BUCKET_KEY, resume.buffer, resume.mimetype);
+            let result = await uploadToS3(resumeDetails.bucket_key, resume.buffer, resume.mimetype);
             if (!result) {
                 return handleRes(
                     req,
@@ -444,9 +442,12 @@ router.post(apiRoutes.UPDATE_JORDAN_HO, adminAuthMiddleware,
                     }
                 );
             }
-
             //get signed url 
-            resume = await getS3UrlBucketFile(RESUME_BUCKET_KEY);
+            resume = await getS3UrlBucketFile({
+                bucket_key: resumeDetails.bucket_key,
+                file_id: resumeDetails.file_id,
+                is_private: resumeDetails.is_private
+            });
         }
 
         if (req.files.profile_picture) {
@@ -469,7 +470,10 @@ router.post(apiRoutes.UPDATE_JORDAN_HO, adminAuthMiddleware,
                 );
             }
 
-            let result = await uploadToS3(PROFILE_PICTURE_BUCKET_KEY, profile_picture.buffer, profile_picture.mimetype);
+            //query for file details
+            let profilePicDetails = await getBucketFileByFileId(updatedJordanHoData.profile_picture_file_id);
+
+            let result = await uploadToS3(profilePicDetails.bucket_key, profile_picture.buffer, profile_picture.mimetype);
             //upload success to s3
             if (!result) {
                 return handleRes(
@@ -484,18 +488,25 @@ router.post(apiRoutes.UPDATE_JORDAN_HO, adminAuthMiddleware,
                 );
             }
 
+            //get signed url 
+            resume = await getS3UrlBucketFile({
+                bucket_key: profilePicDetails.bucket_key,
+                file_id: profilePicDetails.file_id,
+                is_private: profilePicDetails.is_private
+            });
+
             //get signed url
-            profilePicture = await getS3UrlBucketFile(PROFILE_PICTURE_BUCKET_KEY);
+            profilePicture = await getS3UrlBucketFile(profilePicDetails.bucket_key);
         }
     }
 
     let data = updatedJordanHoData;
     //add file data to data
     if(profilePicture) {
-        data['profile_picture_url'] = profilePicture;
+        data['profile_picture_url'] = profilePicture.bucket_file_signed_url;
     }
     if(resume) {
-        data['resume_url'] = resume;
+        data['resume_url'] = resume.bucket_file_signed_url;
     }
     return handleRes(
         req,
