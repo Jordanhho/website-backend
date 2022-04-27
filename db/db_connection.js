@@ -12,19 +12,15 @@ const {
     initLocalAdminSettings
 } = require("../config/admin_settings");
 
-//to fix issues with mongoose
-mongoose.set('useNewUrlParser', true);
-mongoose.set('useFindAndModify', false);
-mongoose.set('useCreateIndex', true);
-
 //database credentials
 const DB_USERNAME = process.env.DB_USERNAME;
 const DB_PASSWORD = process.env.DB_PASSWORD;
 const DB_NAME = process.env.DB_NAME;
 
 //database connection
-const mongoDbUrl = 'mongodb+srv://' + DB_USERNAME + ':' + DB_PASSWORD + '@cluster0.6hlv5.mongodb.net/' + DB_NAME + '?retryWrites=true&w=majority';
-mongoose.connect(mongoDbUrl, { useNewUrlParser: true, useUnifiedTopology: true });
+const mongoDbUrl = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@cluster0.6hlv5.mongodb.net/${DB_NAME}?retryWrites=true&w=majority`;
+
+mongoose.connect(mongoDbUrl, { useUnifiedTopology: true });
 const dbConnection = mongoose.connection;
 
 function connectToDb() {
