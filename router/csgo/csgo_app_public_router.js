@@ -128,11 +128,10 @@ router.post(apiRoutes.PUBLIC_MAP_DETAIL, async function (req, res) {
     //get map details
     let mapDetail = await getMapDetailByMapId(map_id);
 
-
     //get all public utils that are associated with this map id
     const is_private = false;
     let utilDetails = await getUtilDetailsByMapId(map_id, is_private);
-    if (!utilDetails) {
+    if (!utilDetails || !mapDetail) {
         return handleRes(
             req,
             res,
